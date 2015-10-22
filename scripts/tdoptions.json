@@ -1,0 +1,13 @@
+{
+  "target": "ES5",
+  "module": "commonjs",
+  "moduleResolution": "node",
+  "excludeNotExported": true,
+  "experimentalDecorators": true,
+  "mode": "file",
+  "out": "docs/api",
+  "src": [
+    "typings/es6-collections/es6-collections.d.ts",
+    "src/index.ts"
+  ]
+}

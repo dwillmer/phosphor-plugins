@@ -8,6 +8,7 @@
     "bar": "^0.1.0"
   },
   "devDependencies": {
+    "steal": "^0.12.1"
   },
   "scripts": {
     "clean": "rimraf lib",

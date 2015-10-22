@@ -1,0 +1,40 @@
+{
+  "name": "phosphide-demo",
+  "version": "0.1.0",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "dependencies": {
+    "foo": "^0.1.0",
+    "bar": "^0.1.0"
+  },
+  "devDependencies": {
+  },
+  "scripts": {
+    "clean": "rimraf lib",
+    "build:src": "tsc --project src",
+    "build": "npm run build:src",
+    "build:example": "tsc --project example && browserify example/index.js -o example/bundle.js",
+    "build:browser": "browserify -t browserify-css build/index.js -o build/bundle.js",
+    "prepublish": "npm run build",
+    "postinstall": "npm dedupe"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phosphide/phosphide.git"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/index.d.ts"
+  ],
+  "keywords": [
+    "phosphide",
+    "plugin",
+    "application"
+  ],
+  "author": "Dave Willmer <dave.willmer@gmail.com>",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/phosphide/phosphide/issues"
+  },
+  "homepage": "https://github.com/phosphide/phosphide"
+}

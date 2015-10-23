@@ -320,9 +320,9 @@ function loadExtension(name: string, mod: any, ext: IExtensionJSON): Promise<voi
 
 
 /**
- * Finish loading an extension to the extension point.
+ * Connect an extension to the extension point.
  *
- * This is an intermediate step to handle optionally loading json data.
+ * First loads JSON data and loader function, if given.
  */
 function connectExtension(name: string, receiver: (ext: IExtension<any>) =>IDisposable, pExt: IExtensionPartial): Promise<void> {
   

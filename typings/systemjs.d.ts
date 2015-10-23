@@ -3,7 +3,7 @@
 // Definitions by: Steven Silvester <https://github.com/blink1073/>
 
 
-interface npmPathObject {
+interface npmObject {
     name: string;
     fileUrl: string;
 }
@@ -15,7 +15,7 @@ interface System {
 
     delete(module: string): boolean;
 
-    npmPaths: { [key: string]: npmPathObject };
+    npm: { [key: string]: npmObject };
 
 }
 

@@ -225,8 +225,8 @@ function gatherPlugins(): Promise<void> {
   pluginReg = new Map<string, IPluginJSON>();
   var promises: Promise<void>[] = [];
   // fetch the metadata about available plugins
-  for (var key in System.npmPaths) {
-    var obj = System.npmPaths[key];
+  Object.keys(System.npm).map((key) => {
+    var obj = System.npm[key];
     // check for one occurrence of `node_modules` in the fileUrl
     var fileUrl = obj.fileUrl;
     var index = fileUrl.indexOf('node_modules');
@@ -234,7 +234,7 @@ function gatherPlugins(): Promise<void> {
     if (index > 0 && index === lastIndex) {
       promises.push(loadPackage(obj.name));
     }
-  }
+  });
   return Promise.all(promises).then(() => { return void 0; });
 }
 

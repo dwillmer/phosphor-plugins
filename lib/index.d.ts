@@ -95,7 +95,7 @@ export interface IExtension<T> {
 /**
  * Get a list of available plugin names.
  */
-export declare function listPlugins(): Promise<string[]>;
+export declare function listPlugins(reload?: boolean): Promise<string[]>;
 /**
  * Load a plugin by name.
  *

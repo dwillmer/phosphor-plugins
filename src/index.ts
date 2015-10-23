@@ -150,38 +150,38 @@ function listPlugins(): Promise<string[]> {
  */
 export
 function loadPlugin(name: string): Promise<void> {
-  return gatherPlugins().then(() => {
-    var plugin = pluginReg.get(name);
-    if (!plugin) throw Error('Plugin not in registry');
+  return new Promise<void>((resolve, reject) => {
+    gatherPlugins().then(() => {
+      var plugin = pluginReg.get(name);
+      if (!plugin) reject(Error('Plugin not in registry'));
 
-    return System.import(name + '/' + plugin.main).then((mod: any) => {
-      var promises: Promise<void>[] = [];
-      // load all extension points and extensions
-      if (plugin.hasOwnProperty('extensionPoints')) {
-        plugin.extensionPoints.map((point) => {
-          promises.push(loadExtensionPoint(name, mod, point));
-        });
-      }
-      if (plugin.hasOwnProperty('extensions')) {
-        console.log('has extensions');
-        plugin.extensions.map((ext) => {
-          promises.push(loadExtension(name, mod, ext));
-        });
-      }
-      console.log('waiting for', promises.length, 'promises');
-      return Promise.all(promises).then(() => {
-        console.log('initializing here', name);
-        // initialize the plugin
-        if (mod.hasOwnProperty('initialize')) {
-          var disposable = mod.initialize();
-          var disposables = disposableReg.get(name) || [];
-          disposables.push(disposable);
-          disposableReg.set(name, disposables);  
+      System.import(name + '/' + plugin.main).then((mod: any) => {
+        var promises: Promise<void>[] = [];
+        // load all extension points and extensions
+        if (plugin.hasOwnProperty('extensionPoints')) {
+          plugin.extensionPoints.map((point) => {
+            promises.push(loadExtensionPoint(name, mod, point));
+          });
         }
-      }).catch(() => {
-        console.log('unknown failure');
-      });
-    });
+        if (plugin.hasOwnProperty('extensions')) {
+          plugin.extensions.map((ext) => {
+            promises.push(loadExtension(name, mod, ext));
+          });
+        }
+        Promise.all(promises).then(() => {
+          // initialize the plugin
+          if (mod.hasOwnProperty('initialize')) {
+            var disposable = mod.initialize();
+            if (disposable.hasOwnProperty('dispose')) {
+              var disposables = disposableReg.get(name) || [];
+              disposables.push(disposable);
+              disposableReg.set(name, disposables);  
+            }
+          }
+          resolve(void 0);
+        }, reject);
+      }, reject);
+    }, reject);
   });
 }
 
@@ -255,8 +255,9 @@ function loadPackage(name: string): Promise<void> {
       }
       pluginReg.set(name, plugin);
     }
-  }).catch(() => {
-    console.warn('Failed to load plugin: ' + name);
+  }).catch((error: any) => {
+    console.error('Failed to load plugin: ' + name);
+    console.error(error);
   });
 }
 
@@ -268,19 +269,18 @@ function loadExtensionPoint(name: string, mod: any, point: IExtensionPointJSON):
   return new Promise<void>((resolve, reject) => {
     var receiver = mod[point.receiver];
     extensionPointReg.set(point.id,  receiver);
-    console.log('load extension point');
     var extensions = extensionReg.get(point.id);
     if (extensions) {
       var promises: Promise<void>[] = [];
       extensions.map((pExt) => {
         promises.push(handleExtension(name, receiver, pExt));
       });
-      return Promise.all(promises).then(() => resolve(void 0));
+      Promise.all(promises).then(() => resolve(void 0));
     }
-    console.log('load extension point done', name);
-    resolve();
-  }).catch(() => {
-    console.warn('Failed to load extension point: ' + point.id);
+    resolve(void 0);
+  }).catch((error) => {
+    console.error('Failed to load extension point: ' + point.id);
+    console.error(error);
   });
 }
 
@@ -305,7 +305,7 @@ function loadExtension(name: string, mod: any, ext: IExtensionJSON): Promise<voi
     }
     var receiver = extensionPointReg.get(ext.point);
     if (receiver) {
-      handleExtension(name, receiver, pExt).then(resolve);
+      handleExtension(name, receiver, pExt).then(resolve, reject);
     } else {
       var pExts = extensionReg.get(ext.point) || [];
       pExts.push(pExt);
@@ -313,51 +313,46 @@ function loadExtension(name: string, mod: any, ext: IExtensionJSON): Promise<voi
       resolve(void 0);
     }
   }).catch((error) => {
-    console.warn('Failed to load extension: ' + name + ' to ' + ext.point);
-    console.log(error);
+    console.error('Failed to load extension: ' + name + ' to ' + ext.point);
+    console.error(error);
   });
 }
 
 
 /**
- * Continue loading an extension to the extension point.
+ * Finish loading an extension to the extension point.
  *
  * This is an intermediate step to handle optionally loading json data.
  */
 function handleExtension(name: string, receiver: (ext: IExtension<any>) =>IDisposable, pExt: IExtensionPartial): Promise<void> {
-  // check for json data to load
+  
   return new Promise<void>((resolve, reject) => {
-    if ((pExt.data !== void 0) && (pExt.data.indexOf('.json') > 0)) {
-      System.import(name + '/' + pExt.data).then((data: any) => {
-        pExt.data = data;
-        resolve(finishExtension(name, receiver, pExt));
-      });
-    } else {
-      return resolve(finishExtension(name, receiver, pExt));
+    var promises: Promise<void>[] = [];
+    var ext: IExtension<any> = {
+      data: null,
+      object: null,
+      config: pExt.config || null
     }
+    // check for json data to load
+    if ((pExt.data !== void 0) && (pExt.data.indexOf('.json') > 0)) {
+      promises.push(System.import(name + '/' + pExt.data).then((data: any) => {
+        ext.data = data;
+      }));
+    } 
+    // check for a loader function
+    if (pExt.loader) {
+      promises.push(pExt.loader().then(obj => { ext.object = obj; }));
+    }
+    Promise.all(promises).then(() => {
+      var disposable = receiver(ext);
+      if (disposable.hasOwnProperty('dispose')) {
+        var disposables = disposableReg.get(name) || [];
+        disposables.push(disposable);
+        disposableReg.set(name, disposables);  
+      }
+      resolve(void 0);
+    }, reject);
   });
-}
-
-
-/**
- * Actually load the extension and store the disposable.
- */
-function finishExtension(name: string, receiver: (ext: IExtension<any>) =>IDisposable, pExt: IExtensionPartial): void {
-  console.log('finish extension', name);
-  var object: any = null;
-  if (pExt.loader) {
-    object = pExt.loader();
-  }
-  var ext: IExtension<any> = {
-    data: pExt.data || null,
-    object: object,
-    config: pExt.config || null
-  }
-  var disposable = receiver(ext);
-  var disposables = disposableReg.get(name) || [];
-  disposables.push(disposable);
-  disposableReg.set(name, disposables);
-  console.log('done finishing extension', name);
 }
 
 

@@ -273,7 +273,7 @@ function loadExtensionPoint(name: string, mod: any, point: IExtensionPointJSON):
     if (extensions) {
       var promises: Promise<void>[] = [];
       extensions.map((pExt) => {
-        promises.push(handleExtension(name, receiver, pExt));
+        promises.push(connectExtension(name, receiver, pExt));
       });
       Promise.all(promises).then(() => resolve(void 0));
     }
@@ -305,7 +305,7 @@ function loadExtension(name: string, mod: any, ext: IExtensionJSON): Promise<voi
     }
     var receiver = extensionPointReg.get(ext.point);
     if (receiver) {
-      handleExtension(name, receiver, pExt).then(resolve, reject);
+      connectExtension(name, receiver, pExt).then(resolve, reject);
     } else {
       var pExts = extensionReg.get(ext.point) || [];
       pExts.push(pExt);
@@ -324,7 +324,7 @@ function loadExtension(name: string, mod: any, ext: IExtensionJSON): Promise<voi
  *
  * This is an intermediate step to handle optionally loading json data.
  */
-function handleExtension(name: string, receiver: (ext: IExtension<any>) =>IDisposable, pExt: IExtensionPartial): Promise<void> {
+function connectExtension(name: string, receiver: (ext: IExtension<any>) =>IDisposable, pExt: IExtensionPartial): Promise<void> {
   
   return new Promise<void>((resolve, reject) => {
     var promises: Promise<void>[] = [];

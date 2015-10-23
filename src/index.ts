@@ -320,7 +320,7 @@ function loadExtension(name: string, mod: any, ext: IExtensionJSON): Promise<voi
 
 
 /**
- * Connect an extension to the extension point.
+ * Connect an extension to its extension point.
  *
  * First loads JSON data and loader function, if given.
  */

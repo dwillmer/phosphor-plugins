@@ -130,9 +130,21 @@ interface IExtension<T> {
  * Get a list of available plugin names.
  */
 export 
-function listPlugins(): Promise<string[]> {
-  return gatherPlugins().then(() => { 
-    return (Array as any).from(pluginReg.keys()); 
+function listPlugins(reload = false): Promise<string[]> {
+  return new Promise<string[]>((resolve, reject) => {
+    if (reload) {
+      System.delete('package.json!npm');
+      pluginReg = null;
+      System.import('package.json!npm').then(() => {
+        gatherPlugins().then(() => { 
+          resolve((Array as any).from(pluginReg.keys())); 
+        }, reject);
+      }, reject);
+    } else {
+      gatherPlugins().then(() => { 
+        resolve((Array as any).from(pluginReg.keys()));
+      }, reject);
+    }
   });
 }
 

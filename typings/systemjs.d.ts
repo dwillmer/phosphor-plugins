@@ -13,6 +13,8 @@ interface System {
 
     import(module: string): Promise<any>;
 
+    delete(module: string): boolean;
+
     npmPaths: { [key: string]: npmPathObject };
 
 }

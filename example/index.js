@@ -9,6 +9,7 @@ lib.listPlugins().then((plugins) => {
             console.log('bar finished loading');
             lib.unloadPlugin('bar');
             lib.unloadPlugin('foo');
+            console.log('all plugins unloaded');
         });
     });
 });

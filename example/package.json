@@ -1,22 +1,17 @@
 {
   "name": "phosphide-demo",
   "version": "0.1.0",
-  "main": "lib/index.js",
+  "main": "index.js",
   "typings": "lib/index.d.ts",
   "dependencies": {
     "foo": "^0.1.0",
     "bar": "^0.1.0"
   },
   "devDependencies": {
+    "jpm": "^1.0.3",
     "steal": "^0.12.1"
   },
   "scripts": {
-    "clean": "rimraf lib",
-    "build:src": "tsc --project src",
-    "build": "npm run build:src",
-    "build:example": "tsc --project example && browserify example/index.js -o example/bundle.js",
-    "build:browser": "browserify -t browserify-css build/index.js -o build/bundle.js",
-    "prepublish": "npm run build",
     "postinstall": "npm dedupe"
   },
   "repository": {

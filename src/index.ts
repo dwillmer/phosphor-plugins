@@ -12,10 +12,6 @@ import {
 } from 'phosphor-disposable';
 
 
-// stub for System
-declare var System: any;
-
-
 export
 interface IExtensionJSON {
   /**

@@ -353,7 +353,7 @@ function connectExtension(name: string, receiver: (ext: IExtension<any>) =>IDisp
     }
     Promise.all(promises).then(() => {
       var disposable = receiver(ext);
-      if (disposable.hasOwnProperty('dispose')) {
+      if (disposable && disposable.hasOwnProperty('dispose')) {
         var disposables = disposableReg.get(name) || [];
         disposables.push(disposable);
         disposableReg.set(name, disposables);  

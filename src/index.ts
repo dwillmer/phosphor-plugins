@@ -180,7 +180,7 @@ function loadPlugin(name: string): Promise<void> {
           // initialize the plugin
           if (mod.hasOwnProperty('initialize')) {
             var disposable = mod.initialize();
-            if (disposable.hasOwnProperty('dispose')) {
+            if (disposable && disposable.hasOwnProperty('dispose')) {
               var disposables = disposableReg.get(name) || [];
               disposables.push(disposable);
               disposableReg.set(name, disposables);  

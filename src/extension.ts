@@ -334,7 +334,7 @@ function loadExtensionPoint(point: IExtensionPointJSON): Promise<IDisposable> {
   var extPoint = new ExtensionPoint(point);
   var extensions = allExtensions.get(point.id);
   if (!extensions) {
-    return Promise.resolve(null);
+    return Promise.resolve(extPoint);
   }
   allExtensions.delete(point.id);
   var promises: Promise<void>[] = [];

@@ -5,7 +5,13 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "dependencies": {
-    "phosphor-disposable": "^1.0.4"
+    "phosphor-disposable": "^1.0.4",
+    "phosphor-dockpanel": "^0.9.2",
+    "phosphor-menus": "^0.9.5",
+    "phosphor-signaling": "^1.1.2",
+    "phosphor-tabs": "^0.9.7",
+    "phosphor-topsort": "^0.9.1",
+    "phosphor-widget": "^0.9.11"
   },
   "devDependencies": {
     "coveralls": "^2.11.4",
@@ -22,9 +28,10 @@
   "scripts": {
     "clean": "rimraf lib",
     "build:src": "tsc --project src",
+    "build:plugins": "tsc --project plugins/ui/src && tsc --project plugins/menus/src",
     "build": "npm run build:src",
     "build:example": "mkdirp example/phosphide && node scripts/copyjs.js",
-    "prepublish": "npm run build",
+    "prepublish": "npm run build && npm run build:plugins",
     "postinstall": "npm dedupe"
   },
   "repository": {
@@ -40,6 +47,22 @@
     "plugin",
     "application"
   ],
+  "phosphide": {
+    "extensionPoints": [
+      {
+        "module": "plugins/menus/lib/index",
+        "id": "menu:items",
+        "receiver": "receiveItems",
+        "initializer": "initialize"
+      },
+      {
+        "module": "plugins/ui/lib/index",
+        "id": "ui:items",
+        "receiver": "receiveItems",
+        "initializer": "initialize"
+      }
+    ]
+  },
   "author": "Dave Willmer <dave.willmer@gmail.com>",
   "license": "BSD-3-Clause",
   "bugs": {

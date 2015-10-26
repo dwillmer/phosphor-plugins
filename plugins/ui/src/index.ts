@@ -8,10 +8,6 @@
 'use strict';
 
 import {
-  IExtension
-} from 'phosphide';
-
-import {
   IDisposable, DisposableDelegate
 } from 'phosphor-disposable';
 
@@ -26,6 +22,10 @@ import {
 import {
   Widget, attachWidget
 } from 'phosphor-widget';
+
+import {
+  IExtension
+} from '../../../lib/index';
 
 import './index.css';
 
@@ -65,10 +65,10 @@ function receiveItems(extension: IExtension<IItems>): IDisposable {
 
 
 export
-function initialize(): IDisposable {
+function initialize(): Promise<IDisposable> {
   attachWidget(dockarea, document.body);
   window.onresize = () => dockarea.update();
-  return void 0;
+  return Promise.resolve(void 0);
 }
 
 

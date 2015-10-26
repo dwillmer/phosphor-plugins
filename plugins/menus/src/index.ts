@@ -21,7 +21,7 @@ import {
 
 import {
   IExtension
-} from 'phosphide';
+} from '../../../lib/index';
 
 import {
   IDisposable, DisposableDelegate, DisposableSet

@@ -1,2 +1,2 @@
 var cp = require('glob-copy');
-cp.sync('lib/index.js', 'example/phosphide');
+cp.sync('lib/*.js', 'example/phosphide');

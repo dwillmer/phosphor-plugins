@@ -1,8 +1,7 @@
 var lib = require('phosphide/index');
 
 
-lib.listPlugins().then((plugins) => {
-    console.log(plugins);
+lib.fetchPlugins().then(() => {
     lib.loadPlugin('foo').then(() => {
         console.log('foo finished loading');
         lib.loadPlugin('bar').then(() => {

@@ -327,7 +327,7 @@ class Extension implements IDisposable {
 
 
 /**
- * Load an extension point and any existing extensions matching the point.
+ * Load an extension point, connecting any existing matching extensions.
  */
 export
 function loadExtensionPoint(point: IExtensionPointJSON): Promise<IDisposable> {
@@ -346,10 +346,7 @@ function loadExtensionPoint(point: IExtensionPointJSON): Promise<IDisposable> {
 
 
 /**
- * Load an extension.  
- *
- * If the extension point exists, finish loading. 
- * Otherwise, store the partially loaded extension point.
+ * Load an extension, connecting to the corresponding extension point exists.
  */
 export
 function loadExtension(ext: IExtensionJSON): Promise<IDisposable> {

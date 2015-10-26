@@ -352,13 +352,13 @@ function loadExtensionPoint(point: IExtensionPointJSON): Promise<IDisposable> {
 export
 function loadExtension(ext: IExtensionJSON): Promise<IDisposable> {
   var extension = new Extension(ext);
-  var extensions = allExtensions.get(ext.point);
-  extensions.push(extension);
-  allExtensions.set(ext.point, extensions);
   var point = allExtensionPoints.get(ext.point);
   if (point) {
     return point.connect(extension).then(() => { return extension; });
   }
+  var extensions = allExtensions.get(ext.point) || [];
+  extensions.push(extension);
+  allExtensions.set(ext.point, extensions);
   return Promise.resolve(extension);
 }
 

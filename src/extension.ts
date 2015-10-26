@@ -346,7 +346,7 @@ function loadExtensionPoint(point: IExtensionPointJSON): Promise<IDisposable> {
 /**
  * Load an extension.  
  *
- * If the extenstion point exists, finish loading. 
+ * If the extension point exists, finish loading. 
  * Otherwise, store the partially loaded extension point.
  */
 export
@@ -363,8 +363,8 @@ function loadExtension(ext: IExtensionJSON): Promise<IDisposable> {
 }
 
 
-// Map of loaded extension points by point id.
+// Map of available extension points by point id.
 var allExtensionPoints = new Map<string, ExtensionPoint>();
 
-// Map of extensions by point id.
-var allExtensions= new Map<string, Extension[]>();
+// Map of available extensions by point id.
+var allExtensions = new Map<string, Extension[]>();

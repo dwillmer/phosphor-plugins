@@ -114,6 +114,8 @@ class Plugin implements IDisposable {
     return loadExtensionPoint(point).then(result => {
       this._disposables.add(result);
       return void 0;
+    }, (error) => {
+      console.error(error);
     });
   }
 
@@ -124,6 +126,8 @@ class Plugin implements IDisposable {
     return loadExtension(ext).then(result => {
       this._disposables.add(result);
       return void 0;
+    }, (error) => {
+      console.error(error);
     });
   }
 

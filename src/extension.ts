@@ -136,7 +136,7 @@ interface IExtension<T> {
 
 
 /**
- * Implemenation of an Extension Point.
+ * Implementation of an Extension Point.
  */
 class ExtensionPoint implements IDisposable {
 
@@ -283,8 +283,9 @@ class Extension implements IDisposable {
    * Load the extension.
    */
   load(): Promise<IExtension<any>> {
-    var promises = [this._loadData(), this._loadObject()];
-    return Promise.all(promises).then(() => { return this._extension; });
+    return Promise.all([this._loadData(), this._loadObject()]).then(() => { 
+      return this._extension;
+    });
   }
 
   /**

@@ -308,8 +308,8 @@ class Extension implements IDisposable {
     }
     return System.import(this._module).then(mod => { 
       var loader = mod[this._loader] as (() => Promise<IDisposable>);
-      return loader().then((result: IDisposable) => {
-        this._disposables.add(result);
+      return loader().then((result: any) => {
+        this._extension.object = result;
         return void 0;
       });
     });

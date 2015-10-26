@@ -331,15 +331,16 @@ class Extension implements IDisposable {
 export
 function loadExtensionPoint(point: IExtensionPointJSON): Promise<IDisposable> {
   var extPoint = new ExtensionPoint(point);
-  var extensions = allExtensions.get(point.id) || [];
+  var extensions = allExtensions.get(point.id);
+  if (!extensions) {
+    return Promise.resolve(null);
+  }
+  allExtensions.delete(point.id);
   var promises: Promise<void>[] = [];
   extensions.map(ext => {
     promises.push(extPoint.connect(ext));
   });
-  return Promise.all(promises).then(() => {
-    allExtensions.delete(point.id);
-    return extPoint; 
-  });
+  return Promise.all(promises).then(() => { return extPoint; });
 }
 
 

@@ -159,9 +159,10 @@ class ExtensionPoint implements IDisposable {
   }
 
   /**
-   * Dispose of th resources held by the extension point.
+   * Dispose of the resources held by the extension point.
    */
   dispose() {
+    allExtensionPoints.delete(this._id);
     this._receiverFunc = null;
     this._disposables.dispose();
   }
@@ -169,11 +170,11 @@ class ExtensionPoint implements IDisposable {
   /**
    * Connect an extension to the extension point.
    */
-  connect(ext: Extension): Promise<void> {
+  connect(extension: Extension): Promise<void> {
     if (!this._initialized) {
-      return this._load().then(() => { this._connectExtension(ext); });
+      return this._load().then(() => { this._connectExtension(extension); });
     } else {
-      return this._connectExtension(ext);
+      return this._connectExtension(extension);
     }
   }
 
@@ -191,6 +192,7 @@ class ExtensionPoint implements IDisposable {
    * Initialize the extension point.
    */
   private _initialize(): Promise<void> {
+    this._initialized = true;
     if (this._initializer) {
       return System.import(this._module).then(mod => {
         mod[this._initializer]().then((result: IDisposable) => {
@@ -205,11 +207,11 @@ class ExtensionPoint implements IDisposable {
   /**
    * Finish connecting and extension to the extension point.
    */
-  private _connectExtension(ext: Extension): Promise<void> {
+  private _connectExtension(extension: Extension): Promise<void> {
     var receiver = this._receiverFunc;
-    return ext.load().then((iext: IExtension<any>) => {
-      this._disposables.add(receiver(iext));
-      ext.initialize();
+    return extension.load().then((result: IExtension<any>) => {
+      this._disposables.add(receiver(result));
+      extension.initialize();
       return void 0;
     });
   }
@@ -219,7 +221,7 @@ class ExtensionPoint implements IDisposable {
   private _module = '';
   private _initializer = '';
   private _initialized = false;
-  private _receiverFunc: (ext: IExtension<any>) => IDisposable = null;
+  private _receiverFunc: (extension: IExtension<any>) => IDisposable = null;
   private _disposables: DisposableSet = null;
 }
 
@@ -237,7 +239,7 @@ class Extension implements IDisposable {
     this._loader = options.loader;
     this._module = options.module;
     this._data = options.data;
-    this._ext = { 
+    this._extension = { 
       config: options.config,
       data: void 0,
       object: void 0
@@ -257,7 +259,7 @@ class Extension implements IDisposable {
    * Dispose of the resources held by the extension.
    */
   dispose() {
-    this._ext = null;
+    this._extension = null;
     this._disposables.dispose();
   }
 
@@ -265,7 +267,7 @@ class Extension implements IDisposable {
    * Initialize the the extension.
    */
   initialize(): Promise<void> {
-    this._ext = null;
+    this._extension = null;
     if (this._initializer) {
       return System.import(this._module).then(mod => {
         var initializer = mod[this._initializer];
@@ -282,7 +284,7 @@ class Extension implements IDisposable {
    */
   load(): Promise<IExtension<any>> {
     var promises = [this._loadData(), this._loadObject()];
-    return Promise.all(promises).then(() => { return this._ext; });
+    return Promise.all(promises).then(() => { return this._extension; });
   }
 
   /**
@@ -293,7 +295,7 @@ class Extension implements IDisposable {
       return Promise.resolve(void 0);
     }
     return System.import(this._data).then(data => { 
-      this._ext.data = data;
+      this._extension.data = data;
     });
   }
 
@@ -318,7 +320,7 @@ class Extension implements IDisposable {
   private _module = '';
   private _data = '';
   private _initializer = '';
-  private _ext: IExtension<any> = null;
+  private _extension: IExtension<any> = null;
   private _disposables: DisposableSet = null;
 }
 

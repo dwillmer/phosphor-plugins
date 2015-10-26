@@ -13,6 +13,8 @@
       "../typings/es6-collections.d.ts",
       "../typings/es6-promise.d.ts",
       "../typings/systemjs.d.ts",
-      "index.ts"
+      "index.ts",
+      "plugin.ts",
+      "extension.ts"
     ]
 }

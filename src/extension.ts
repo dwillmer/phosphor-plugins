@@ -192,16 +192,16 @@ class ExtensionPoint implements IDisposable {
    * Initialize the extension point.
    */
   private _initialize(): Promise<void> {
-    this._initialized = true;
-    if (this._initializer) {
-      return System.import(this._module).then(mod => {
-        mod[this._initializer]().then((result: IDisposable) => {
-          this._disposables.add(result);
-        });
-      });
-    } else {
+    if ((this._initialized) || (!this._initializer)) {
+      this._initialized = true;
       return Promise.resolve(void 0);
     }
+    this._initialized = true;
+    return System.import(this._module).then(mod => {
+      mod[this._initializer]().then((result: IDisposable) => {
+        this._disposables.add(result);
+      });
+    });
   }
 
   /**

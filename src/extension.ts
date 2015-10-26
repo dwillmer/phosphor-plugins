@@ -330,18 +330,18 @@ class Extension implements IDisposable {
  * Load an extension point, connecting any existing matching extensions.
  */
 export
-function loadExtensionPoint(point: IExtensionPointJSON): Promise<IDisposable> {
-  var extPoint = new ExtensionPoint(point);
-  var extensions = allExtensions.get(point.id);
+function loadExtensionPoint(config: IExtensionPointJSON): Promise<IDisposable> {
+  var point = new ExtensionPoint(config);
+  var extensions = allExtensions.get(config.id);
   if (!extensions) {
-    return Promise.resolve(extPoint);
+    return Promise.resolve(point);
   }
-  allExtensions.delete(point.id);
+  allExtensions.delete(config.id);
   var promises: Promise<void>[] = [];
   extensions.map(ext => {
-    promises.push(extPoint.connect(ext));
+    promises.push(point.connect(ext));
   });
-  return Promise.all(promises).then(() => { return extPoint; });
+  return Promise.all(promises).then(() => { return point; });
 }
 
 
@@ -349,15 +349,15 @@ function loadExtensionPoint(point: IExtensionPointJSON): Promise<IDisposable> {
  * Load an extension, connecting to the corresponding extension point exists.
  */
 export
-function loadExtension(ext: IExtensionJSON): Promise<IDisposable> {
-  var extension = new Extension(ext);
-  var point = allExtensionPoints.get(ext.point);
+function loadExtension(config: IExtensionJSON): Promise<IDisposable> {
+  var extension = new Extension(config);
+  var point = allExtensionPoints.get(config.point);
   if (point) {
     return point.connect(extension).then(() => { return extension; });
   }
-  var extensions = allExtensions.get(ext.point) || [];
+  var extensions = allExtensions.get(config.point) || [];
   extensions.push(extension);
-  allExtensions.set(ext.point, extensions);
+  allExtensions.set(config.point, extensions);
   return Promise.resolve(extension);
 }
 

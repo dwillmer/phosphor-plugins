@@ -254,6 +254,8 @@ function getPluginNames(): string[] {
 function loadPackage(name: string): Promise<void> {
   return System.import(name + '/package.json').then(config => {
     addPackage(name, config);
+  }, (error) => {
+    console.error(error);
   });
 }
 

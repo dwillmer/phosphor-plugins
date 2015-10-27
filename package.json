@@ -32,8 +32,8 @@
     "url": "https://github.com/phophorjs/phosphor-plugins.git"
   },
   "files": [
-    "lib/index.js",
-    "lib/index.d.ts"
+    "lib/*.js",
+    "lib/*.d.ts"
   ],
   "keywords": [
     "phosphide",

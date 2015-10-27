@@ -8,10 +8,6 @@
 'use strict';
 
 import {
-  Before, After
-} from './constraints';
-
-import {
   ICommandMenuItem
 } from './menuiteminterface';
 

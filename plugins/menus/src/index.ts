@@ -42,7 +42,6 @@ import {
 
 import './index.css';
 
-export * from './constraints';
 export * from './menuiteminterface';
 export * from './menumanagerinterface';
 export * from './menusolver';

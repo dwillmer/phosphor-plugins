@@ -3,12 +3,12 @@ phosphor-plugins
 A module for building plugin-based applications.
 
 
-[![Build Status](https://travis-ci.org/phosphorjs/phosphide.svg)](https://travis-ci.org/phosphorjs/phosphor-dockpanel?branch=master)
-[![Coverage Status](https://coveralls.io/repos/phosphorjs/phosphide/badge.svg?branch=master&service=github)](https://coveralls.io/github/phosphorjs/phosphide?branch=master)
+[![Build Status](https://travis-ci.org/phosphorjs/phosphor-plugins.svg)](https://travis-ci.org/phosphorjs/phosphor-plugins?branch=master)
+[![Coverage Status](https://coveralls.io/repos/phosphorjs/phosphor-plugins/badge.svg?branch=master&service=github)](https://coveralls.io/github/phosphorjs/phosphor-plugins?branch=master)
 
 Slightly opinionated scaffolding for building plugin-based IDE-style applications..
 
-[API Docs](http://phosphorjs.github.io/phosphide/api/)
+[API Docs](http://phosphorjs.github.io/phosphor-plugins/api/)
 
 
 Package Install
@@ -18,7 +18,7 @@ Package Install
 - [node](http://nodejs.org/)
 
 ```bash
-npm install --save phosphide
+npm install --save phosphor-plugins
 ```
 
 
@@ -30,8 +30,8 @@ Source Build
 - [node](http://nodejs.org/)
 
 ```bash
-git clone https://github.com/phosphorjs/phosphide.git
-cd phosphide
+git clone https://github.com/phosphorjs/phosphor-plugins.git
+cd phosphor-plugins
 npm install
 ```
 

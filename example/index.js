@@ -1,4 +1,4 @@
-var lib = require('phosphide/index');
+var lib = require('phosphor-plugins/index');
 
 
 lib.fetchPlugins().then(() => {

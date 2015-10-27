@@ -173,13 +173,7 @@ class ExtensionPoint implements IDisposable {
   connect(extension: Extension): Promise<void> {
     console.log('connecting to', this._id);
     if (!this._initialized) {
-      return new Promise<void>((resolve, reject) => {
-        this._load().then(() => {
-          this._connectExtension(extension).then(() => {
-            resolve(void 0);
-          }, reject);
-        }, reject);
-      })
+      return this._load().then(() => this._connectExtension(extension));
     } else {
       return this._connectExtension(extension);
     }
@@ -189,11 +183,9 @@ class ExtensionPoint implements IDisposable {
    * Load the extension point.
    */
   private _load(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      System.import(this._module).then(mod => {
-        this._receiverFunc = mod[this._receiver].bind(this);
-        resolve(this._initialize());
-      }, reject);
+    return System.import(this._module).then(mod => {
+      this._receiverFunc = mod[this._receiver].bind(this);
+      return this._initialize();
     });
   }
 
@@ -206,14 +198,12 @@ class ExtensionPoint implements IDisposable {
       return Promise.resolve(void 0);
     }
     this._initialized = true;
-    return new Promise<void>((resolve, reject) => {
-      System.import(this._module).then(mod => {
-        mod[this._initializer]().then((result: IDisposable) => {
-          if (result.hasOwnProperty('dispose')) {
-            this._disposables.add(result);
-          }
-        }, reject);
-      }, reject);
+    return System.import(this._module).then(mod => {
+      return mod[this._initializer]().then((result: IDisposable) => {
+        if (result.hasOwnProperty('dispose')) {
+          this._disposables.add(result);
+        }
+      });
     });
   }
 
@@ -221,17 +211,13 @@ class ExtensionPoint implements IDisposable {
    * Finish connecting and extension to the extension point.
    */
   private _connectExtension(extension: Extension): Promise<void> {
-    console.log('connect extension', this._id);
     var receiver = this._receiverFunc;
-    return new Promise<void>((resolve, reject) => {
-      extension.load().then((result: IExtension<any>) => {
-        var disposable = receiver(result);
-        if (disposable.hasOwnProperty('dispose')) {
-           this._disposables.add(disposable);
-        }
-        extension.initialize();
-        resolve(void 0);
-      }, reject);
+    return extension.load().then((result: IExtension<any>) => {
+      var disposable = receiver(result);
+      if (disposable.hasOwnProperty('dispose')) {
+         this._disposables.add(disposable);
+      }
+      return extension.initialize();
     });
   }
 
@@ -288,15 +274,13 @@ class Extension implements IDisposable {
   initialize(): Promise<void> {
     this._extension = null;
     if (this._initializer) {
-      return new Promise<void>((resolve, reject) => {
-        System.import(this._module).then(mod => {
-          var initializer = mod[this._initializer];
-          var disposable = initializer();
+      return System.import(this._module).then(mod => {
+        var initializer = mod[this._initializer];
+        return initializer().then((disposable: IDisposable) => {
           if (disposable.hasOwnProperty('dispose')) {
             this._disposables.add(disposable);
           }
-          resolve(void 0);
-        }, reject);
+        });
       });
     } else {
       return Promise.resolve(void 0);
@@ -307,10 +291,8 @@ class Extension implements IDisposable {
    * Load the extension.
    */
   load(): Promise<IExtension<any>> {
-    return new Promise<IExtension<any>>((resolve, reject) => {
-      Promise.all([this._loadData(), this._loadObject()])
-      .then(() => { resolve(this._extension); } , reject);
-    });
+    return Promise.all([this._loadData(), this._loadObject()])
+      .then(() => { return this._extension; });
   }
 
   /**
@@ -320,11 +302,9 @@ class Extension implements IDisposable {
     if (!this._data) {
       return Promise.resolve(void 0);
     }
-    return new Promise<void>((resolve, reject) => {
-      System.import(this._data).then(data => {
-        this._extension.data = data;
-        resolve(void 0);
-      }, reject);
+    return System.import(this._data).then(data => {
+      this._extension.data = data;
+      return void 0;
     });
   }
 
@@ -335,14 +315,12 @@ class Extension implements IDisposable {
     if (!this._loader) {
       return Promise.resolve(void 0);
     }
-    return new Promise<void>((resolve, reject) => {
-      System.import(this._module).then(mod => { 
-        var loader = mod[this._loader] as (() => Promise<any>);
-        loader().then((result: any) => {
-          this._extension.object = result;
-          resolve(void 0);
-        }, reject);
-      }, reject);
+    return System.import(this._module).then(mod => { 
+      var loader = mod[this._loader] as (() => Promise<any>);
+      return loader().then((result: any) => {
+        this._extension.object = result;
+        return void 0;
+      });
     });
   }
 
@@ -372,9 +350,7 @@ function loadExtensionPoint(config: IExtensionPointJSON): Promise<IDisposable> {
   extensions.map(ext => {
     promises.push(point.connect(ext));
   });
-  return new Promise<IDisposable>((resolve, reject) => {
-    Promise.all(promises).then(() => { resolve(point); }, reject);
-  });
+  return Promise.all(promises).then(() => { return point; });
 }
 
 
@@ -386,9 +362,7 @@ function loadExtension(config: IExtensionJSON): Promise<IDisposable> {
   var extension = new Extension(config);
   var point = allExtensionPoints.get(config.point);
   if (point) {
-    return new Promise<IDisposable>((resolve, reject) => {
-      point.connect(extension).then(() => { resolve(extension); }, reject);
-    });
+    return point.connect(extension).then(() => { return extension; });
   }
   var extensions = allExtensions.get(config.point) || [];
   extensions.push(extension);

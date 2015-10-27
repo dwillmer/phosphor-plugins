@@ -1,37 +1,16 @@
 {
-  "name": "phosphide-demo",
+  "name": "phosphor-plugin-demo",
   "version": "0.1.0",
   "main": "index.js",
-  "typings": "lib/index.d.ts",
   "dependencies": {
     "bar": "^0.1.0",
     "foo": "^0.1.0",
     "phosphor-disposable": "^1.0.4"
   },
   "devDependencies": {
-    "jpm": "^1.0.3",
     "steal": "^0.12.1"
   },
   "scripts": {
     "postinstall": "npm dedupe"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phosphide/phosphide.git"
-  },
-  "files": [
-    "lib/index.js",
-    "lib/index.d.ts"
-  ],
-  "keywords": [
-    "phosphide",
-    "plugin",
-    "application"
-  ],
-  "author": "Dave Willmer <dave.willmer@gmail.com>",
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/phosphide/phosphide/issues"
-  },
-  "homepage": "https://github.com/phosphide/phosphide"
+  }
 }

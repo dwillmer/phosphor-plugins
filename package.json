@@ -1,7 +1,7 @@
 {
   "name": "phosphor-plugins",
   "version": "0.1.0",
-  "description": "A slightly opinionated scaffolding for building plugin-based IDE-style applications.",
+  "description": "A module for building plugin-based applications.",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "dependencies": {
@@ -36,11 +36,10 @@
     "lib/*.d.ts"
   ],
   "keywords": [
-    "phosphide",
     "plugin",
     "application"
   ],
-  "author": "Dave Willmer <dave.willmer@gmail.com>",
+  "author": "Steven Silvester <steven.silvester@gmail.com>",
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/phophorjs/phosphor-plugins/issues"

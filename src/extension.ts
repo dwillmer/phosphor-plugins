@@ -171,8 +171,15 @@ class ExtensionPoint implements IDisposable {
    * Connect an extension to the extension point.
    */
   connect(extension: Extension): Promise<void> {
+    console.log('connecting to', this._id);
     if (!this._initialized) {
-      return this._load().then(() => { this._connectExtension(extension); });
+      return new Promise<void>((resolve, reject) => {
+        this._load().then(() => {
+          this._connectExtension(extension).then(() => {
+            resolve(void 0);
+          }, reject);
+        }, reject);
+      })
     } else {
       return this._connectExtension(extension);
     }
@@ -182,9 +189,11 @@ class ExtensionPoint implements IDisposable {
    * Load the extension point.
    */
   private _load(): Promise<void> {
-    return System.import(this._module).then(mod => {
-      this._receiverFunc = mod[this._receiver].bind(this);
-      return this._initialize();
+    return new Promise<void>((resolve, reject) => {
+      System.import(this._module).then(mod => {
+        this._receiverFunc = mod[this._receiver].bind(this);
+        resolve(this._initialize());
+      }, reject);
     });
   }
 
@@ -197,10 +206,14 @@ class ExtensionPoint implements IDisposable {
       return Promise.resolve(void 0);
     }
     this._initialized = true;
-    return System.import(this._module).then(mod => {
-      mod[this._initializer]().then((result: IDisposable) => {
-        this._disposables.add(result);
-      });
+    return new Promise<void>((resolve, reject) => {
+      System.import(this._module).then(mod => {
+        mod[this._initializer]().then((result: IDisposable) => {
+          if (result.hasOwnProperty('dispose')) {
+            this._disposables.add(result);
+          }
+        }, reject);
+      }, reject);
     });
   }
 
@@ -208,11 +221,17 @@ class ExtensionPoint implements IDisposable {
    * Finish connecting and extension to the extension point.
    */
   private _connectExtension(extension: Extension): Promise<void> {
+    console.log('connect extension', this._id);
     var receiver = this._receiverFunc;
-    return extension.load().then((result: IExtension<any>) => {
-      this._disposables.add(receiver(result));
-      extension.initialize();
-      return void 0;
+    return new Promise<void>((resolve, reject) => {
+      extension.load().then((result: IExtension<any>) => {
+        var disposable = receiver(result);
+        if (disposable.hasOwnProperty('dispose')) {
+           this._disposables.add(disposable);
+        }
+        extension.initialize();
+        resolve(void 0);
+      }, reject);
     });
   }
 
@@ -269,10 +288,15 @@ class Extension implements IDisposable {
   initialize(): Promise<void> {
     this._extension = null;
     if (this._initializer) {
-      return System.import(this._module).then(mod => {
-        var initializer = mod[this._initializer];
-        this._disposables.add(initializer());
-        return void 0;
+      return new Promise<void>((resolve, reject) => {
+        System.import(this._module).then(mod => {
+          var initializer = mod[this._initializer];
+          var disposable = initializer();
+          if (disposable.hasOwnProperty('dispose')) {
+            this._disposables.add(disposable);
+          }
+          resolve(void 0);
+        }, reject);
       });
     } else {
       return Promise.resolve(void 0);
@@ -283,8 +307,9 @@ class Extension implements IDisposable {
    * Load the extension.
    */
   load(): Promise<IExtension<any>> {
-    return Promise.all([this._loadData(), this._loadObject()]).then(() => { 
-      return this._extension;
+    return new Promise<IExtension<any>>((resolve, reject) => {
+      Promise.all([this._loadData(), this._loadObject()])
+      .then(() => { resolve(this._extension); } , reject);
     });
   }
 
@@ -295,8 +320,11 @@ class Extension implements IDisposable {
     if (!this._data) {
       return Promise.resolve(void 0);
     }
-    return System.import(this._data).then(data => { 
-      this._extension.data = data;
+    return new Promise<void>((resolve, reject) => {
+      System.import(this._data).then(data => {
+        this._extension.data = data;
+        resolve(void 0);
+      }, reject);
     });
   }
 
@@ -307,12 +335,14 @@ class Extension implements IDisposable {
     if (!this._loader) {
       return Promise.resolve(void 0);
     }
-    return System.import(this._module).then(mod => { 
-      var loader = mod[this._loader] as (() => Promise<any>);
-      return loader().then((result: any) => {
-        this._extension.object = result;
-        return void 0;
-      });
+    return new Promise<void>((resolve, reject) => {
+      System.import(this._module).then(mod => { 
+        var loader = mod[this._loader] as (() => Promise<any>);
+        loader().then((result: any) => {
+          this._extension.object = result;
+          resolve(void 0);
+        }, reject);
+      }, reject);
     });
   }
 
@@ -332,6 +362,7 @@ class Extension implements IDisposable {
 export
 function loadExtensionPoint(config: IExtensionPointJSON): Promise<IDisposable> {
   var point = new ExtensionPoint(config);
+  allExtensionPoints.set(config.id, point);
   var extensions = allExtensions.get(config.id);
   if (!extensions) {
     return Promise.resolve(point);
@@ -341,7 +372,9 @@ function loadExtensionPoint(config: IExtensionPointJSON): Promise<IDisposable> {
   extensions.map(ext => {
     promises.push(point.connect(ext));
   });
-  return Promise.all(promises).then(() => { return point; });
+  return new Promise<IDisposable>((resolve, reject) => {
+    Promise.all(promises).then(() => { resolve(point); }, reject);
+  });
 }
 
 
@@ -353,7 +386,9 @@ function loadExtension(config: IExtensionJSON): Promise<IDisposable> {
   var extension = new Extension(config);
   var point = allExtensionPoints.get(config.point);
   if (point) {
-    return point.connect(extension).then(() => { return extension; });
+    return new Promise<IDisposable>((resolve, reject) => {
+      point.connect(extension).then(() => { resolve(extension); }, reject);
+    });
   }
   var extensions = allExtensions.get(config.point) || [];
   extensions.push(extension);

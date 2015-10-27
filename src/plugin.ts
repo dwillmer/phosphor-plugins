@@ -59,8 +59,9 @@ class Plugin implements IDisposable {
   /**
    * Construct a new plugin.
    */
-  constructor(options: IPluginJSON) {
-    this._module = options.module;
+  constructor(name: string, options: IPluginJSON) {
+    this._module = name + '/' + options.module;
+    this._name = name;
     this._initializer = options.initializer;
     if (options.extensionPoints) {
       this._extensionPoints = options.extensionPoints.slice();
@@ -102,8 +103,10 @@ class Plugin implements IDisposable {
         promises.push(this._loadExtension(ext));
       });
     }
-    return Promise.all(promises).then(() => {
-      return this._initialize();
+    return new Promise<void>((resolve, reject) => {
+      Promise.all(promises).then(() => {
+        this._initialize().then(resolve, reject);
+      }, reject);
     });
   }
 
@@ -111,24 +114,41 @@ class Plugin implements IDisposable {
    * Load an extension point.
    */
   private _loadExtensionPoint(point: IExtensionPointJSON): Promise<void> {
-    return loadExtensionPoint(point).then(result => {
-      this._disposables.add(result);
-      return void 0;
-    }, (error) => {
-      console.error(error);
-    });
+     if (point.hasOwnProperty('module') || (point.module)) {
+      point.module = this._name + '/' + point.module;
+    } else {
+      point.module = this._module;
+    }
+    return new Promise<void>((resolve, reject) => {
+      loadExtensionPoint(point).then(result => {
+        if (result.hasOwnProperty('dispose')) {
+          this._disposables.add(result);
+        }
+        resolve(void 0);
+      });
+    }).catch((error: any) => { console.error(error); });
   }
 
   /**
    * Load an extension.
    */
-  private _loadExtension(ext: IExtensionJSON): Promise<void> {
-    return loadExtension(ext).then(result => {
-      this._disposables.add(result);
-      return void 0;
-    }, (error) => {
-      console.error(error);
-    });
+  private _loadExtension(extension: IExtensionJSON): Promise<void> {
+    if (extension.hasOwnProperty('module') || (extension.module)) {
+      extension.module = this._name + '/' + extension.module;
+    } else {
+      extension.module = this._module;
+    }
+    if (extension.hasOwnProperty('data') || (extension.data)) {
+      extension.data = this._name + '/' + extension.data;
+    }
+    return new Promise<void>((resolve, reject) => {
+      loadExtension(extension).then(result => {
+        if (result.hasOwnProperty('dispose')) {
+          this._disposables.add(result);
+        }
+        resolve(void 0);
+      }, reject);
+    }).catch((error: any) => { console.error(error); });
   }
 
   /**
@@ -138,16 +158,22 @@ class Plugin implements IDisposable {
     this._extensionPoints = [];
     this._extensions = [];
     if (this._initializer) {
-      return System.import(this._module).then(mod => {
-        var initializer = mod[this._initializer];
-        this._disposables.add(initializer());
-        return void 0;
-      });
+      return new Promise<void>((resolve, reject) => {
+        System.import(this._module).then(mod => {
+          var initializer = mod[this._initializer];
+          var disposable = initializer();
+          if (disposable.hasOwnProperty('dispose')) {
+            this._disposables.add(disposable);
+          }
+          resolve(void 0);
+        }, reject);
+      }).catch((error: any) => { console.error(error); });
     } else {
       return Promise.resolve(void 0);
     }
   }
 
+  private _name = '';
   private _module = '';
   private _initializer = '';
   private _extensionPoints: IExtensionPointJSON[] = null;
@@ -174,7 +200,10 @@ export
 function fetchPlugins(): Promise<void> {
   if (availablePlugins) {
     System.delete('package.json!npm');
-    return System.import('package.json!npm').then(gatherPlugins);
+    return new Promise<void>((resolve, reject) => {
+      System.import('package.json!npm').then(gatherPlugins).then(
+        resolve, reject);
+    }); 
   } else {
     availablePlugins = new Map<string, Plugin>();
     return gatherPlugins();
@@ -221,7 +250,9 @@ function gatherPlugins(): Promise<void> {
   getPluginNames().map(name => {
     promises.push(loadPackage(name));
   });
-  return Promise.all(promises).then(() => { return void 0; });
+  return new Promise<void>((resolve, reject) => {
+    Promise.all(promises).then(() => resolve(void 0), reject);
+  });
 }
 
 
@@ -252,11 +283,12 @@ function getPluginNames(): string[] {
  * Load a package by name and add to plugin registry if valid plugin.
  */
 function loadPackage(name: string): Promise<void> {
-  return System.import(name + '/package.json').then(config => {
-    addPackage(name, config);
-  }, (error) => {
-    console.error(error);
-  });
+  return new Promise<void>((resolve, reject) => {
+    System.import(name + '/package.json').then(config => {
+      addPackage(name, config);
+      resolve(void 0);
+    }, reject);
+  }).catch((error: any) => { console.error(error); });
 }
 
 
@@ -267,7 +299,7 @@ function addPackage(name: string, config: any) {
   if (config.hasOwnProperty('phosphide')) {
     var pconfig = config.phosphide as IPluginJSON;
     pconfig.module = pconfig.module || config.main;
-    availablePlugins.set(name, new Plugin(pconfig));
+    availablePlugins.set(name, new Plugin(name, pconfig));
   }
 }
 

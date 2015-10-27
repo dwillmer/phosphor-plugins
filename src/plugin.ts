@@ -119,7 +119,6 @@ class Plugin implements IDisposable {
       if (result.hasOwnProperty('dispose')) {
         this._disposables.add(result);
       }
-      return void 0;
     }).catch((error: any) => { console.error(error); });
   }
 
@@ -139,7 +138,6 @@ class Plugin implements IDisposable {
       if (result.hasOwnProperty('dispose')) {
         this._disposables.add(result);
       }
-      return void 0;
     }).catch((error: any) => { console.error(error); });
   }
 
@@ -156,7 +154,6 @@ class Plugin implements IDisposable {
         if (disposable.hasOwnProperty('dispose')) {
           this._disposables.add(disposable);
         }
-        return void 0;
       }).catch((error: any) => { console.error(error); });
     } else {
       return Promise.resolve(void 0);
@@ -237,7 +234,7 @@ function gatherPlugins(): Promise<void> {
   getPluginNames().map(name => {
     promises.push(loadPackage(name));
   });
-  return Promise.all(promises).then(() => { return void 0; });
+  return Promise.all(promises).then(() => { });
 }
 
 
@@ -270,7 +267,6 @@ function getPluginNames(): string[] {
 function loadPackage(name: string): Promise<void> {
   return System.import(name + '/package.json').then(config => {
      addPackage(name, config);
-     return void 0;
   }).catch((error: any) => { console.error(error); });
 }
 

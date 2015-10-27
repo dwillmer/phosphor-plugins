@@ -304,7 +304,6 @@ class Extension implements IDisposable {
     }
     return System.import(this._data).then(data => {
       this._extension.data = data;
-      return void 0;
     });
   }
 
@@ -319,7 +318,6 @@ class Extension implements IDisposable {
       var loader = mod[this._loader] as (() => Promise<any>);
       return loader().then((result: any) => {
         this._extension.object = result;
-        return void 0;
       });
     });
   }

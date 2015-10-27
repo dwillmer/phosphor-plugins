@@ -103,11 +103,7 @@ class Plugin implements IDisposable {
         promises.push(this._loadExtension(ext));
       });
     }
-    return new Promise<void>((resolve, reject) => {
-      Promise.all(promises).then(() => {
-        this._initialize().then(resolve, reject);
-      }, reject);
-    });
+    return Promise.all(promises).then(() => this._initialize.bind(this));
   }
 
   /**
@@ -119,13 +115,11 @@ class Plugin implements IDisposable {
     } else {
       point.module = this._module;
     }
-    return new Promise<void>((resolve, reject) => {
-      loadExtensionPoint(point).then(result => {
-        if (result.hasOwnProperty('dispose')) {
-          this._disposables.add(result);
-        }
-        resolve(void 0);
-      });
+    return loadExtensionPoint(point).then(result => {
+      if (result.hasOwnProperty('dispose')) {
+        this._disposables.add(result);
+      }
+      return void 0;
     }).catch((error: any) => { console.error(error); });
   }
 
@@ -141,13 +135,11 @@ class Plugin implements IDisposable {
     if (extension.hasOwnProperty('data') || (extension.data)) {
       extension.data = this._name + '/' + extension.data;
     }
-    return new Promise<void>((resolve, reject) => {
-      loadExtension(extension).then(result => {
-        if (result.hasOwnProperty('dispose')) {
-          this._disposables.add(result);
-        }
-        resolve(void 0);
-      }, reject);
+    return loadExtension(extension).then(result => {
+      if (result.hasOwnProperty('dispose')) {
+        this._disposables.add(result);
+      }
+      return void 0;
     }).catch((error: any) => { console.error(error); });
   }
 
@@ -158,15 +150,13 @@ class Plugin implements IDisposable {
     this._extensionPoints = [];
     this._extensions = [];
     if (this._initializer) {
-      return new Promise<void>((resolve, reject) => {
-        System.import(this._module).then(mod => {
-          var initializer = mod[this._initializer];
-          var disposable = initializer();
-          if (disposable.hasOwnProperty('dispose')) {
-            this._disposables.add(disposable);
-          }
-          resolve(void 0);
-        }, reject);
+      return System.import(this._module).then(mod => {
+        var initializer = mod[this._initializer];
+        var disposable = initializer();
+        if (disposable.hasOwnProperty('dispose')) {
+          this._disposables.add(disposable);
+        }
+        return void 0;
       }).catch((error: any) => { console.error(error); });
     } else {
       return Promise.resolve(void 0);
@@ -200,10 +190,7 @@ export
 function fetchPlugins(): Promise<void> {
   if (availablePlugins) {
     System.delete('package.json!npm');
-    return new Promise<void>((resolve, reject) => {
-      System.import('package.json!npm').then(gatherPlugins).then(
-        resolve, reject);
-    }); 
+    return System.import('package.json!npm').then(gatherPlugins); 
   } else {
     availablePlugins = new Map<string, Plugin>();
     return gatherPlugins();
@@ -250,9 +237,7 @@ function gatherPlugins(): Promise<void> {
   getPluginNames().map(name => {
     promises.push(loadPackage(name));
   });
-  return new Promise<void>((resolve, reject) => {
-    Promise.all(promises).then(() => resolve(void 0), reject);
-  });
+  return Promise.all(promises).then(() => { return void 0; });
 }
 
 
@@ -283,11 +268,9 @@ function getPluginNames(): string[] {
  * Load a package by name and add to plugin registry if valid plugin.
  */
 function loadPackage(name: string): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    System.import(name + '/package.json').then(config => {
-      addPackage(name, config);
-      resolve(void 0);
-    }, reject);
+  return System.import(name + '/package.json').then(config => {
+     addPackage(name, config);
+     return void 0;
   }).catch((error: any) => { console.error(error); });
 }
 

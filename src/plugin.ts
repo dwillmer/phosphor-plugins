@@ -275,8 +275,8 @@ function loadPackage(name: string): Promise<void> {
  * Add a package to the registry if valid.
  */
 function addPackage(name: string, config: any) {
-  if (config.hasOwnProperty('phosphide')) {
-    var pconfig = config.phosphide as IPluginJSON;
+  if (config.hasOwnProperty('phosphor-plugin')) {
+    var pconfig = config['phosphor-plugin'] as IPluginJSON;
     pconfig.module = pconfig.module || config.main;
     availablePlugins.set(name, new Plugin(name, pconfig));
   }

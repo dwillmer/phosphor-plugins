@@ -250,6 +250,7 @@ function getPluginNames(): string[] {
   // fetch the metadata about available packages
   Object.keys(System.npm).map((key) => {
     var obj = System.npm[key];
+    console.log("[getNames] AV: " + availablePlugins.toString());
     if ((availablePlugins.get(name)) || (loadedPlugins.get(name))) {
       return;
     }
@@ -279,9 +280,10 @@ function loadPackage(name: string): Promise<void> {
  * Add a package to the registry if valid.
  */
 function addPackage(name: string, config: any) {
-  if (config.hasOwnProperty('phosphide')) {
-    var pconfig = config.phosphide as IPluginJSON;
+  if (config.hasOwnProperty('phosphor-plugin')) {
+    var pconfig = config["phosphor-plugin"] as IPluginJSON;
     pconfig.module = pconfig.module || config.main;
+    console.log("[Add] AV: " + availablePlugins.toString());
     availablePlugins.set(name, new Plugin(name, pconfig));
   }
 }

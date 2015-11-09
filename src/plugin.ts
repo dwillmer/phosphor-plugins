@@ -174,6 +174,7 @@ class Plugin implements IDisposable {
  */
 export
 function listPlugins(): Promise<string[]> {
+  console.log("[List] available:" + availablePlugins.toString());
   return (Array as any).from(availablePlugins.keys());
 }
 
@@ -204,6 +205,7 @@ function fetchPlugins(): Promise<void> {
  */
 export
 function loadPlugin(name: string): Promise<void> {
+  console.log("[Load] available" + availablePlugins.toString());
   var plugin = availablePlugins.get(name);
   if (!plugin) throw Error('Plugin not in registry');
   availablePlugins.delete(name);

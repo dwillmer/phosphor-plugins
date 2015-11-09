@@ -286,7 +286,7 @@ function addPackage(name: string, config: any) {
 
 
 // Map of available plugins by name.
-var availablePlugins: Map<string, Plugin> = null;
+var availablePlugins: Map<string, Plugin> = new Map<string, Plugin>();
 
 // map of loaded plugins by name.
 var loadedPlugins = new Map<string, Plugin>();

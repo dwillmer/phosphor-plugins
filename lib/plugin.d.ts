@@ -31,7 +31,7 @@ export interface IPluginJSON {
 /**
  * Get a list of available plugin names.
  */
-export declare function listPlugins(): Promise<string[]>;
+export declare function listPlugins(): string[];
 /**
  * Fetch the available plugins.
  *

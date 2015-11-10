@@ -276,7 +276,7 @@ function loadPackage(name: string): Promise<void> {
  */
 function addPackage(name: string, config: any) {
   if (config.hasOwnProperty('phosphor-plugin')) {
-    var pconfig = config["phosphor-plugin"] as IPluginJSON;
+    var pconfig = config['phosphor-plugin'] as IPluginJSON;
     pconfig.module = pconfig.module || config.main;
     availablePlugins[name] = new Plugin(name, pconfig);
   }

@@ -171,7 +171,6 @@ class ExtensionPoint implements IDisposable {
    * Connect an extension to the extension point.
    */
   connect(extension: Extension): Promise<void> {
-    console.log('connecting to', this._id);
     if (!this._initialized) {
       return this._load().then(() => this._connectExtension(extension));
     } else {

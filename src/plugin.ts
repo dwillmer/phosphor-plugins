@@ -174,7 +174,6 @@ class Plugin implements IDisposable {
  */
 export
 function listPlugins(): Promise<string[]> {
-  console.log("[List] available:" + availablePlugins.toString());
   return (Array as any).from(availablePlugins.keys());
 }
 
@@ -186,11 +185,10 @@ function listPlugins(): Promise<string[]> {
  */
 export
 function fetchPlugins(): Promise<void> {
-  if (availablePlugins !== null) {
+  if (availablePlugins) {
     System.delete('package.json!npm');
     return System.import('package.json!npm').then(gatherPlugins);
   } else {
-    console.log("[Fetch] Gathering...");
     availablePlugins = new Map<string, Plugin>();
     return gatherPlugins();
   };
@@ -205,7 +203,6 @@ function fetchPlugins(): Promise<void> {
  */
 export
 function loadPlugin(name: string): Promise<void> {
-  console.log("[Load] available" + availablePlugins.toString());
   var plugin = availablePlugins.get(name);
   if (!plugin) throw Error('Plugin not in registry');
   availablePlugins.delete(name);
@@ -235,7 +232,6 @@ function unloadPlugin(name: string): void {
 function gatherPlugins(): Promise<void> {
   var promises: Promise<void>[] = [];
   getPluginNames().map(name => {
-    console.log("GATHER (loading): " + name);
     promises.push(loadPackage(name));
   });
   return Promise.all(promises).then(() => { });
@@ -250,7 +246,6 @@ function getPluginNames(): string[] {
   // fetch the metadata about available packages
   Object.keys(System.npm).map((key) => {
     var obj = System.npm[key];
-    console.log("[getNames] AV: " + availablePlugins.toString());
     if ((availablePlugins.get(name)) || (loadedPlugins.get(name))) {
       return;
     }
@@ -283,7 +278,6 @@ function addPackage(name: string, config: any) {
   if (config.hasOwnProperty('phosphor-plugin')) {
     var pconfig = config["phosphor-plugin"] as IPluginJSON;
     pconfig.module = pconfig.module || config.main;
-    console.log("[Add] AV: " + availablePlugins.toString());
     availablePlugins.set(name, new Plugin(name, pconfig));
   }
 }

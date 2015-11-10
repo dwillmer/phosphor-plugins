@@ -171,7 +171,6 @@ class ExtensionPoint implements IDisposable {
    * Connect an extension to the extension point.
    */
   connect(extension: Extension): Promise<void> {
-    console.log('connecting to', this._id);
     if (!this._initialized) {
       return this._load().then(() => this._connectExtension(extension));
     } else {
@@ -200,7 +199,7 @@ class ExtensionPoint implements IDisposable {
     this._initialized = true;
     return System.import(this._module).then(mod => {
       return mod[this._initializer]().then((result: IDisposable) => {
-        if (result.hasOwnProperty('dispose')) {
+        if (result && result.hasOwnProperty('dispose')) {
           this._disposables.add(result);
         }
       });
@@ -244,7 +243,7 @@ class Extension implements IDisposable {
     this._loader = options.loader;
     this._module = options.module;
     this._data = options.data;
-    this._extension = { 
+    this._extension = {
       config: options.config,
       data: void 0,
       object: void 0
@@ -314,7 +313,7 @@ class Extension implements IDisposable {
     if (!this._loader) {
       return Promise.resolve(void 0);
     }
-    return System.import(this._module).then(mod => { 
+    return System.import(this._module).then(mod => {
       var loader = mod[this._loader] as (() => Promise<any>);
       return loader().then((result: any) => {
         this._extension.object = result;

@@ -11,7 +11,7 @@ import {
   IDisposable, DisposableSet
 } from 'phosphor-disposable';
 
-import { 
+import {
   IExtensionJSON, IExtensionPointJSON, loadExtension, loadExtensionPoint
 } from './extension';
 
@@ -172,7 +172,7 @@ class Plugin implements IDisposable {
 /**
  * Get a list of available plugin names.
  */
-export 
+export
 function listPlugins(): string[] {
   return Object.keys(availablePlugins);
 }
@@ -187,7 +187,7 @@ export
 function fetchPlugins(): Promise<void> {
   if (Object.keys(availablePlugins).length) {
     System.delete('package.json!npm');
-    return System.import('package.json!npm').then(gatherPlugins); 
+    return System.import('package.json!npm').then(gatherPlugins);
   } else {
     availablePlugins = { };
     return gatherPlugins();
@@ -214,7 +214,7 @@ function loadPlugin(name: string): Promise<void> {
 /**
  * Unload a plugin by name, disposing of its resources.
  *
- * This is a no-op if the plugin has not been loaded or has already 
+ * This is a no-op if the plugin has not been loaded or has already
  * been unloaded.
  */
 export

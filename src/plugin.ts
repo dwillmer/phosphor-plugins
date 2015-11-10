@@ -173,8 +173,8 @@ class Plugin implements IDisposable {
  * Get a list of available plugin names.
  */
 export
-function listPlugins(): Promise<string[]> {
-  return (Array as any).from(availablePlugins.keys());
+function listPlugins(): string[] {
+  return Object.keys(availablePlugins);
 }
 
 
@@ -185,11 +185,11 @@ function listPlugins(): Promise<string[]> {
  */
 export
 function fetchPlugins(): Promise<void> {
-  if (availablePlugins) {
+  if (Object.keys(availablePlugins).length) {
     System.delete('package.json!npm');
     return System.import('package.json!npm').then(gatherPlugins);
   } else {
-    availablePlugins = new Map<string, Plugin>();
+    availablePlugins = { };
     return gatherPlugins();
   };
 }
@@ -203,10 +203,10 @@ function fetchPlugins(): Promise<void> {
  */
 export
 function loadPlugin(name: string): Promise<void> {
-  var plugin = availablePlugins.get(name);
+  var plugin = availablePlugins[name];
   if (!plugin) throw Error('Plugin not in registry');
-  availablePlugins.delete(name);
-  loadedPlugins.set(name, plugin);
+  delete availablePlugins[name];
+  loadedPlugins[name] = plugin;
   return plugin.load();
 }
 
@@ -219,7 +219,7 @@ function loadPlugin(name: string): Promise<void> {
  */
 export
 function unloadPlugin(name: string): void {
-  var plugin = loadedPlugins.get(name);
+  var plugin = loadedPlugins[name];
   if (plugin) plugin.dispose();
 }
 
@@ -246,7 +246,7 @@ function getPluginNames(): string[] {
   // fetch the metadata about available packages
   Object.keys(System.npm).map((key) => {
     var obj = System.npm[key];
-    if ((availablePlugins.get(name)) || (loadedPlugins.get(name))) {
+    if ((name in availablePlugins) || (name in loadedPlugins)) {
       return;
     }
     // check for one occurrence of `node_modules` in the fileUrl
@@ -278,13 +278,13 @@ function addPackage(name: string, config: any) {
   if (config.hasOwnProperty('phosphor-plugin')) {
     var pconfig = config["phosphor-plugin"] as IPluginJSON;
     pconfig.module = pconfig.module || config.main;
-    availablePlugins.set(name, new Plugin(name, pconfig));
+    availablePlugins[name] = new Plugin(name, pconfig);
   }
 }
 
 
 // Map of available plugins by name.
-var availablePlugins: Map<string, Plugin> = new Map<string, Plugin>();
+var availablePlugins: { [key: string]: Plugin } = { };
 
 // map of loaded plugins by name.
-var loadedPlugins = new Map<string, Plugin>();
+var loadedPlugins: { [key: string]: Plugin } = { };

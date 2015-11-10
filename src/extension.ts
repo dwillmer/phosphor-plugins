@@ -336,6 +336,9 @@ class Extension implements IDisposable {
  */
 export
 function loadExtensionPoint(config: IExtensionPointJSON): Promise<IDisposable> {
+  if (allExtensionPoints.get(config.id)) {
+    throw new Error(`Extension point already exists for {config.id}`)
+  }
   var point = new ExtensionPoint(config);
   allExtensionPoints.set(config.id, point);
   var extensions = allExtensions.get(config.id);

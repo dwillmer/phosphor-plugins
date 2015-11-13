@@ -1,9 +1,10 @@
 phosphor-plugins
 ================
-A module for building plugin-based applications.
 
 [![Build Status](https://travis-ci.org/phosphorjs/phosphor-plugins.svg)](https://travis-ci.org/phosphorjs/phosphor-plugins?branch=master)
 [![Coverage Status](https://coveralls.io/repos/phosphorjs/phosphor-plugins/badge.svg?branch=master&service=github)](https://coveralls.io/github/phosphorjs/phosphor-plugins?branch=master)
+
+A module for building plugin-based applications.
 
 [API Docs](http://phosphorjs.github.io/phosphor-plugins/api/)
 

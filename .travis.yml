@@ -5,13 +5,12 @@ sudo: false
 env:
   matrix:
     - GROUP=
-before_install:
-  - chmod +x ./scripts/travis_install.sh
-  - chmod +x ./scripts/travis_script.sh
-  - chmod +x ./scripts/travis_after_success.sh
+  global:
+    - GHREPO=github.com/phosphorjs/phosphor-plugins
+    - secure: daYOb9x/jJLnWbGW2Mngk2ZGU/K+N1LxNASwRBfU0TGen3AGemHolQAjZbzT2MFNXXpcT6wWxZM75QgZKDPInJWZutcwoRXilw9+Ys7MIYzcSMg4dpCNkD3fTlSnjDvRuSh+9nne/bSPnVljaOQ+6Ck9AXH/WxpU8su+C9FRO2pR/Qx+OpVYrxicRM84oD2M+C/EcziprgpWbS+OJ/9hbna9Lq135L8HmTIXJyiYg4S58S7pRwdxf5PL37oSYPr3fBKiJ1fcZVoh/jlrMaXUonquIckWcNepB7HzIvINTK8Z9+R7bpTjODPBCwdibpyDil4bT0M/jM+WLxotPJhj+6M5rVvXQ/4en1tbfpU2GDMM7YPbTSJzf65Kt47AAbf8tSPCH5s+1ZJtqkEhmEIafCrdb7BJwQD73Zw6Hm9+0CrfNb085M7jsqE4ohLPA7PLJhH6yWRBLccQaJlgJDOKEodW3YvAQk+WxARQ6ih59nZQVbmaVUAzf7pHTNxk4kLf+hSl0uVJQUTuy02QQMqv50NkErMU8k16OZR3+InZ4KoPik/vmiu0K8gizHXkOXEBH4O+lerslawH6sct6xfKpbrhzPDijThQ88tuow2jPTHMitVJWejYfSDkieA2tQ7CjRjeyDTyon9WH5vsz01Szlo4Ub+piGi4fZKm3qypAkI=
 install:
-  - ./scripts/travis_install.sh
+  - bash ./scripts/travis_install.sh
 script:
-  - ./scripts/travis_script.sh
+  - bash ./scripts/travis_script.sh
 after_success:
-  - ./scripts/travis_after_success.sh
+  - bash ./scripts/travis_after_success.sh

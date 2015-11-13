@@ -36,8 +36,9 @@
     "lib/*.d.ts"
   ],
   "keywords": [
+    "application",
     "plugin",
-    "application"
+    "plugins"
   ],
   "author": "Steven Silvester <steven.silvester@gmail.com>",
   "license": "BSD-3-Clause",

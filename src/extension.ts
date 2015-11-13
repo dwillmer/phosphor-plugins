@@ -164,37 +164,48 @@ interface IExtensionSpec {
 
 
 /**
+ * An object which represents a contribution to an extension point.
  *
+ * Objects of this type will be passed to the `receiver` function of an
+ * extension point when a matching extension is registered and loaded.
+ *
+ * All properties of the extension should be treated as read-only.
  */
 export
 interface IExtension<T> {
   /**
-   * The actual extension object.
+   * The globally unique id of the extension.
    *
-   * This is the result of resolving the Promise returned by
-   * the loader function specified by the extension JSON.
+   * This is the same `id` declared in the extension specification.
+   */
+  id: string;
+
+  /**
+   * The actual extension object consumed by the extension point.
+   *
+   * This is the result of resolving the promise returned by the
+   * `loader` function declared in the extension specification.
    *
    * This will be `null` if the extension does not specify a loader.
    */
   object: T;
 
   /**
-   * The loaded JSON specified by the extension.
+   * The loaded JSON data specified by the extension.
    *
-   * This is the result of calling `JSON.parse` on the data file
-   * specified by the extension JSON.
+   * This is the result of calling `JSON.parse` on the contents of the
+   * `data` file declared in the extension specification.
    *
    * This will be `null` if the extension does not specify a data file.
    */
   data: any;
 
   /**
-   * The config specified by the extension.
+   * The static configuration data specified by the extension.
    *
-   * This will be the object representation of the config specified
-   * in the extension JSON.
+   * This will be `null` if the extension does not specify such data.
    *
-   * This will be `null` if the extension does not specify a data file.
+   * Configuration data should be treated as immutable.
    */
   config: any;
 }

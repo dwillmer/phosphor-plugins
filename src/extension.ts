@@ -26,10 +26,9 @@ interface IExtensionPointSpec {
   /**
    * The globally unique id of the extension point.
    *
-   * Uniqueness of the extension point id is enforced when the spec is
-   * registered. To minimize the possibility of conflicts while also
-   * remaining human-readable, the extension point id should use the
-   * namespace format: `my-package:my-extension-point`.
+   * Uniqueness of the id is enforced when the spec is registered. To
+   * minimize the possibility of conflicts and remain human-readable,
+   * the id should use the format: `my-package:my-extension-point`.
    */
   id: string;
 
@@ -85,7 +84,20 @@ interface IExtensionPointSpec {
 export
 interface IExtensionSpec {
   /**
+   * The globally unique id of the extension.
+   *
+   * Uniqueness of the id is enforced when the spec is registered. To
+   * minimize the possibility of conflicts and remain human-readable,
+   * the id should use the format: `my-package:my-extension-point`.
+   */
+  id: string;
+
+  /**
    * The id of the extension point to which the extension contributes.
+   *
+   * It is **not** necessary for the extension point to be registered
+   * before the extension (or at all). If and when the extension point
+   * is registered, the extension will be loaded.
    */
   point: string;
 

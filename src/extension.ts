@@ -8,99 +8,148 @@
 'use strict';
 
 import {
-  IDisposable, DisposableDelegate, DisposableSet
+  IDisposable, DisposableSet
 } from 'phosphor-disposable';
 
 
+/**
+ * An object which provides the specification for an extension point.
+ *
+ * The extension point spec contains the information necessary for the
+ * plugin system to lazily load and initialize the extension point when
+ * matching extensions are registered.
+ */
 export
-interface IExtensionJSON {
+interface IExtensionPointSpec {
+  /**
+   * The globally unique id of the extension point.
+   *
+   * Uniqueness of the extension point id is enforced when the spec is
+   * registered. To minimize the possibility of conflicts while also
+   * remaining human-readable, the extension point id should use the
+   * namespace format: `my-package:my-extension-point`.
+   */
+  id: string;
+
+  /**
+   * The path to the main module for the extension point.
+   *
+   * When the first matching extension is registered for the extension
+   * point, the module will be imported via `System.import(spec.main)`.
+   */
+  main: string;
+
+  /**
+   * The name of the receiver function for the extension point.
+   *
+   * This is the name of a function in the [[main]] module which acts
+   * as the receiver for the extension point. It is called whenever a
+   * matching extension is loaded for the extension point. It takes a
+   * single argument of `IExtension<T>` and returns an `IDisposable`,
+   * which will be disposed when either of the extension point or the
+   * extension are unloaded.
+   *
+   * The receiver function will never be invoked before the promise
+   * returned by the [[initializer]] function (if given) is resolved.
+   */
+  receiver: string;
+
+  /**
+   * The name of the initializer function for the extension point.
+   *
+   * This is the name of a function in the [[main]] module which acts
+   * as the initializer for the extension point. It is called with no
+   * arguments and should return a `Promise<IDisposable>`, which will
+   * be disposed when the extension point is unloaded.
+   *
+   * An extension point will not receive extensions until the promise
+   * returned by the initializer resolves. This allows the extension
+   * point to perform asynchronous setup after its module is loaded,
+   * but before receiving extensions.
+   */
+  initializer?: string;
+}
+
+
+/**
+ * An object which provides the specification for an extension.
+ *
+ * The extension spec contains the information necessary for the plugin
+ * system to lazily load and initialize the extension when the matching
+ * extension point is registered.
+ */
+export
+interface IExtensionSpec {
   /**
    * The id of the extension point to which the extension contributes.
    */
   point: string;
 
   /**
-   * The name of the loader function in the plugin `main` module.
+   * The path to the main module for the extension.
    *
-   * When the extension is loaded, this function will be called to
-   * return a Promise which resolves to the actual extension object
-   * to contribute to the extension point.
+   * When a matching extension point is registered, the module will
+   * be imported via `System.import(spec.main)`.
+   *
+   * The main module does not need to be provided for extensions which
+   * only contribute JSON data or configuration to an extension point.
+   */
+  main?: string;
+
+  /**
+   * The name of the initializer function for the extension.
+   *
+   * This is the name of a function in the [[main]] module which acts
+   * as the initializer for the extension. It is called with no
+   * arguments and should return a `Promise<IDisposable>`, which will
+   * be disposed when the extension is unloaded.
+   *
+   * The extension will not load extension objects until the promise
+   * returned by the initializer resolves. This allows the extension
+   * to perform asynchronous setup after its module is loaded, but
+   * before loading actual extension objects.
+   */
+  initializer?: string;
+
+  /**
+   * The name of the loader function for the extension.
+   *
+   * This is the name of a function in the [[main]] module which acts
+   * as the loader for the extension. It is called whenever a matching
+   * extension point is loaded. It takes no arguments and returns a
+   * `Promise<T>` where `T` is the type of the extension object.
+   *
+   * The loader function will never be invoked before the promise
+   * returned by the [[initializer]] function (if given) is resolved.
    */
   loader?: string;
 
   /**
    * The path to the JSON data file for the extension.
    *
-   * Some extension points (like menus and keymaps) can make use of
-   * data defined as JSON. This path will be used to load the JSON
-   * and provide it to the extension point.
+   * Some extension points can make use of data defined as JSON. This
+   * path will be used to load and parse the JSON into an object and
+   * provide the result to the extension point.
    */
   data?: string;
 
   /**
-   * Extra configuration data for the extension.
+   * Extra static configuration data for the extension.
    *
    * Some extension points can make use of extra static declarative
-   * data associated with an extension. That data goes here in the
-   * form of a JSON object.
+   * data associated with an extension. That data can be specified
+   * here in the form of an already-parsed JSON object and will be
+   * provided to the extension point.
+   *
+   * This object should be treated as immutable.
    */
   config?: any;
-
-  /**
-   * The path to the javascript module for the extension.
-   *
-   * This path is relative to the `package.json`.
-   *
-   * If not given, it will default to plugin main file.
-   */
-   module?: string;
-
-  /**
-   * The name of the initialization function for the extension.
-   *
-   * When the extension is loaded, this function will be called to
-   * return a Promise<Disposable> object.
-   */
-  initializer?: string;
 }
 
 
-export
-interface IExtensionPointJSON {
-  /**
-   * The unique id of the extension point.
-   *
-   * This should be namespaced: "my-plugin:extension-point-name".
-   */
-  id: string;
-
-  /**
-   * The name of the receiver function in the plugin `main` module.
-   *
-   * When an extension is loaded for this extension point, this
-   * function will be invoked with an `IExtension` object.
-   */
-  receiver: string;
-
-  /**
-   * The path to the javascript module for the extension point.
-   *
-   * This path is relative to the `package.json`.
-   *
-   * If not given, it will default to plugin main file.
-   */
-   module?: string;
-
-  /**
-   * The name of the initialization function for the extension point.
-   *
-   * When the extension point is loaded, this function will be called to
-   * return a Promise<Disposable> object.
-   */
-  initializer?: string;
-}
-
-
+/**
+ *
+ */
 export
 interface IExtension<T> {
   /**
@@ -132,6 +181,46 @@ interface IExtension<T> {
    * This will be `null` if the extension does not specify a data file.
    */
   config: any;
+}
+
+
+/**
+ * Load an extension point, connecting any existing matching extensions.
+ */
+export
+function loadExtensionPoint(config: IExtensionPointJSON): Promise<IDisposable> {
+  if (allExtensionPoints.get(config.id)) {
+    throw new Error(`Extension point already exists for {config.id}`)
+  }
+  var point = new ExtensionPoint(config);
+  allExtensionPoints.set(config.id, point);
+  var extensions = allExtensions.get(config.id);
+  if (!extensions) {
+    return Promise.resolve(point);
+  }
+  allExtensions.delete(config.id);
+  var promises: Promise<void>[] = [];
+  extensions.map(ext => {
+    promises.push(point.connect(ext));
+  });
+  return Promise.all(promises).then(() => { return point; });
+}
+
+
+/**
+ * Load an extension, connecting to the corresponding extension point exists.
+ */
+export
+function loadExtension(config: IExtensionJSON): Promise<IDisposable> {
+  var extension = new Extension(config);
+  var point = allExtensionPoints.get(config.point);
+  if (point) {
+    return point.connect(extension).then(() => { return extension; });
+  }
+  var extensions = allExtensions.get(config.point) || [];
+  extensions.push(extension);
+  allExtensions.set(config.point, extensions);
+  return Promise.resolve(extension);
 }
 
 
@@ -331,48 +420,9 @@ class Extension implements IDisposable {
 }
 
 
-/**
- * Load an extension point, connecting any existing matching extensions.
- */
-export
-function loadExtensionPoint(config: IExtensionPointJSON): Promise<IDisposable> {
-  if (allExtensionPoints.get(config.id)) {
-    throw new Error(`Extension point already exists for {config.id}`)
-  }
-  var point = new ExtensionPoint(config);
-  allExtensionPoints.set(config.id, point);
-  var extensions = allExtensions.get(config.id);
-  if (!extensions) {
-    return Promise.resolve(point);
-  }
-  allExtensions.delete(config.id);
-  var promises: Promise<void>[] = [];
-  extensions.map(ext => {
-    promises.push(point.connect(ext));
-  });
-  return Promise.all(promises).then(() => { return point; });
-}
-
-
-/**
- * Load an extension, connecting to the corresponding extension point exists.
- */
-export
-function loadExtension(config: IExtensionJSON): Promise<IDisposable> {
-  var extension = new Extension(config);
-  var point = allExtensionPoints.get(config.point);
-  if (point) {
-    return point.connect(extension).then(() => { return extension; });
-  }
-  var extensions = allExtensions.get(config.point) || [];
-  extensions.push(extension);
-  allExtensions.set(config.point, extensions);
-  return Promise.resolve(extension);
-}
-
-
 // Map of available extension points by point id.
 var allExtensionPoints = new Map<string, ExtensionPoint>();
+
 
 // Map of available extensions by point id.
 var allExtensions = new Map<string, Extension[]>();

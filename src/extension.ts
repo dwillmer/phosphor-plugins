@@ -18,6 +18,8 @@ import {
  * The extension point spec contains the information necessary for the
  * plugin system to lazily load and initialize the extension point when
  * matching extensions are registered.
+ *
+ * All properties of the spec should be treated as read-only.
  */
 export
 interface IExtensionPointSpec {
@@ -77,6 +79,8 @@ interface IExtensionPointSpec {
  * The extension spec contains the information necessary for the plugin
  * system to lazily load and initialize the extension when the matching
  * extension point is registered.
+ *
+ * All properties of the spec should be treated as read-only.
  */
 export
 interface IExtensionSpec {
@@ -141,7 +145,7 @@ interface IExtensionSpec {
    * here in the form of an already-parsed JSON object and will be
    * provided to the extension point.
    *
-   * This object should be treated as immutable.
+   * Configuration data should be treated as immutable.
    */
   config?: any;
 }

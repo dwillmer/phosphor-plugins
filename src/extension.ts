@@ -8,68 +8,8 @@
 'use strict';
 
 import {
-  IDisposable, DisposableSet
+  IDisposable
 } from 'phosphor-disposable';
-
-
-/**
- * An object which provides the specification for an extension point.
- *
- * The extension point spec contains the information necessary for the
- * plugin system to lazily load and initialize the extension point when
- * matching extensions are registered.
- *
- * All properties of the spec should be treated as read-only.
- */
-export
-interface IExtensionPointSpec {
-  /**
-   * The globally unique id of the extension point.
-   *
-   * Uniqueness of the id is enforced when the spec is registered. To
-   * minimize the possibility of conflicts and remain human-readable,
-   * the id should use the format: `my-package:my-extension-point`.
-   */
-  id: string;
-
-  /**
-   * The path to the main module for the extension point.
-   *
-   * When the first matching extension is registered for the extension
-   * point, the module will be imported via `System.import(spec.main)`.
-   */
-  main: string;
-
-  /**
-   * The name of the receiver function for the extension point.
-   *
-   * This is the name of a function in the [[main]] module which acts
-   * as the receiver for the extension point. It is called whenever a
-   * matching extension is loaded for the extension point. It takes a
-   * single argument of `IExtension<T>` and returns an `IDisposable`,
-   * which will be disposed when either of the extension point or the
-   * extension are unloaded.
-   *
-   * The receiver function will never be invoked before the promise
-   * returned by the [[initializer]] function (if given) is resolved.
-   */
-  receiver: string;
-
-  /**
-   * The name of the initializer function for the extension point.
-   *
-   * This is the name of a function in the [[main]] module which acts
-   * as the initializer for the extension point. It is called with no
-   * arguments and should return a `Promise<IDisposable>`, which will
-   * be disposed when the extension point is unloaded.
-   *
-   * An extension point will not receive extensions until the promise
-   * returned by the initializer resolves. This allows the extension
-   * point to perform asynchronous setup after its module is loaded,
-   * but before receiving extensions.
-   */
-  initializer?: string;
-}
 
 
 /**
@@ -79,7 +19,9 @@ interface IExtensionPointSpec {
  * system to lazily load and initialize the extension when the matching
  * extension point is registered.
  *
- * All properties of the spec should be treated as read-only.
+ * User code will not typically create an extension spec directly. The
+ * plugin system will create a spec automatically using the definition
+ * contained in the plugin's `package.json`.
  */
 export
 interface IExtensionSpec {
@@ -96,15 +38,15 @@ interface IExtensionSpec {
    * The id of the extension point to which the extension contributes.
    *
    * It is **not** necessary for the extension point to be registered
-   * before the extension (or at all). If and when the extension point
-   * is registered, the extension will be loaded.
+   * before the extension. The extension will be loaded as soon as a
+   * matching extension point is registered.
    */
   point: string;
 
   /**
    * The path to the main module for the extension.
    *
-   * When a matching extension point is registered, the module will
+   * When a matching extension point is registered, this module will
    * be imported via `System.import(spec.main)`.
    *
    * The main module does not need to be provided for extensions which
@@ -116,9 +58,9 @@ interface IExtensionSpec {
    * The name of the initializer function for the extension.
    *
    * This is the name of a function in the [[main]] module which acts
-   * as the initializer for the extension. It is called with no
-   * arguments and should return a `Promise<IDisposable>`, which will
-   * be disposed when the extension is unloaded.
+   * as the initializer for the extension. It takes no arguments and
+   * should return `null`, `IDisposable`, or `Promise<IDisposable>`.
+   * The disposable will be disposed when the extension is unloaded.
    *
    * The extension will not load extension objects until the promise
    * returned by the initializer resolves. This allows the extension
@@ -132,11 +74,12 @@ interface IExtensionSpec {
    *
    * This is the name of a function in the [[main]] module which acts
    * as the loader for the extension. It is called whenever a matching
-   * extension point is loaded. It takes no arguments and returns a
-   * `Promise<T>` where `T` is the type of the extension object.
+   * extension point is loaded. It takes no arguments and should return
+   * an object of the type required by the target extension point, or a
+   * `Promise` to such an object.
    *
-   * The loader function will never be invoked before the promise
-   * returned by the [[initializer]] function (if given) is resolved.
+   * The loader function will not be called before the promise returned
+   * by the [[initializer]] function is resolved.
    */
   loader?: string;
 
@@ -146,6 +89,8 @@ interface IExtensionSpec {
    * Some extension points can make use of data defined as JSON. This
    * path will be used to load and parse the JSON into an object and
    * provide the result to the extension point.
+   *
+   * The contents of this file must be valid JSON.
    */
   data?: string;
 
@@ -155,7 +100,7 @@ interface IExtensionSpec {
    * Some extension points can make use of extra static declarative
    * data associated with an extension. That data can be specified
    * here in the form of an already-parsed JSON object and will be
-   * provided to the extension point.
+   * provided directly to the extension point.
    *
    * Configuration data should be treated as immutable.
    */
@@ -168,8 +113,6 @@ interface IExtensionSpec {
  *
  * Objects of this type will be passed to the `receiver` function of an
  * extension point when a matching extension is registered and loaded.
- *
- * All properties of the extension should be treated as read-only.
  */
 export
 interface IExtension<T> {
@@ -177,6 +120,8 @@ interface IExtension<T> {
    * The globally unique id of the extension.
    *
    * This is the same `id` declared in the extension specification.
+   *
+   * This is a read-only property.
    */
   id: string;
 
@@ -187,8 +132,10 @@ interface IExtension<T> {
    * `loader` function declared in the extension specification.
    *
    * This will be `null` if the extension does not specify a loader.
+   *
+   * This is a read-only property.
    */
-  object: T;
+  item: T;
 
   /**
    * The loaded JSON data specified by the extension.
@@ -197,6 +144,8 @@ interface IExtension<T> {
    * `data` file declared in the extension specification.
    *
    * This will be `null` if the extension does not specify a data file.
+   *
+   * This is a read-only property.
    */
   data: any;
 
@@ -206,250 +155,238 @@ interface IExtension<T> {
    * This will be `null` if the extension does not specify such data.
    *
    * Configuration data should be treated as immutable.
+   *
+   * This is a read-only property.
    */
   config: any;
 }
 
 
 /**
- * Load an extension point, connecting any existing matching extensions.
+ * A class which manages the life cycle of an extension.
+ *
+ * User code will not typically interact with instances of this class
+ * directly. The plugin system will create and manipulate extension
+ * managers automatically when a plugin registers its extensions.
  */
 export
-function loadExtensionPoint(config: IExtensionPointJSON): Promise<IDisposable> {
-  if (allExtensionPoints.get(config.id)) {
-    throw new Error(`Extension point already exists for {config.id}`)
-  }
-  var point = new ExtensionPoint(config);
-  allExtensionPoints.set(config.id, point);
-  var extensions = allExtensions.get(config.id);
-  if (!extensions) {
-    return Promise.resolve(point);
-  }
-  allExtensions.delete(config.id);
-  var promises: Promise<void>[] = [];
-  extensions.map(ext => {
-    promises.push(point.connect(ext));
-  });
-  return Promise.all(promises).then(() => { return point; });
-}
-
-
-/**
- * Load an extension, connecting to the corresponding extension point exists.
- */
-export
-function loadExtension(config: IExtensionJSON): Promise<IDisposable> {
-  var extension = new Extension(config);
-  var point = allExtensionPoints.get(config.point);
-  if (point) {
-    return point.connect(extension).then(() => { return extension; });
-  }
-  var extensions = allExtensions.get(config.point) || [];
-  extensions.push(extension);
-  allExtensions.set(config.point, extensions);
-  return Promise.resolve(extension);
-}
-
-
-/**
- * Implementation of an Extension Point.
- */
-class ExtensionPoint implements IDisposable {
-
+class ExtensionManager implements IDisposable {
   /**
-   * Construct a new extension point.
+   * Construct a new extension manager.
+   *
+   * @param spec - The specification for the extension.
    */
-  constructor(options: IExtensionPointJSON) {
-    this._id = options.id;
-    this._receiver = options.receiver;
-    this._module = options.module;
-    this._initializer = options.initializer;
-    this._disposables = new DisposableSet();
+  constructor(spec: IExtensionSpec) {
+    this._id = spec.id;
+    this._point = spec.point;
+    this._main = spec.main || '';
+    this._data = spec.data || '';
+    this._loader = spec.loader || '';
+    this._config = spec.config || null;
+    this._initializer = spec.initializer || '';
   }
 
   /**
-   * Whether the extension point has been disposed.
+   * Dispose of the extension.
+   *
+   * This will release the loaded extension and invoke the disposable
+   * returned by the module initializer. After this method returns,
+   * the `load` method will always return a rejected promise.
+   *
+   * All subsequent calls to this method will be a no-op.
+   */
+  dispose(): void {
+    if (this._disposed) {
+      return;
+    }
+    this._disposed = true;
+    this._promise = Promise.reject(this._disposedError());
+    safeDispose(this._disposable);
+    this._disposable = null;
+  }
+
+  /**
+   * Test whether the extension is disposed.
+   *
+   * #### Notes
+   * This is a read-only property.
    */
   get isDisposed(): boolean {
-    return this._disposables.isDisposed;
+    return this._disposed;
   }
 
   /**
-   * Dispose of the resources held by the extension point.
+   * Get the unique id of the extension.
+   *
+   * #### Notes
+   * This is a read-only property.
    */
-  dispose() {
-    allExtensionPoints.delete(this._id);
-    this._receiverFunc = null;
-    this._disposables.dispose();
+  get id(): string {
+    return this._id;
   }
 
   /**
-   * Connect an extension to the extension point.
+   * Get the id of the targeted extension point.
+   *
+   * #### Notes
+   * This is a read-only property.
    */
-  connect(extension: Extension): Promise<void> {
-    if (!this._initialized) {
-      return this._load().then(() => this._connectExtension(extension));
-    } else {
-      return this._connectExtension(extension);
-    }
+  get point(): string {
+    return this._point;
   }
 
   /**
-   * Load the extension point.
-   */
-  private _load(): Promise<void> {
-    return System.import(this._module).then(mod => {
-      this._receiverFunc = mod[this._receiver].bind(this);
-      return this._initialize();
-    });
-  }
-
-  /**
-   * Initialize the extension point.
-   */
-  private _initialize(): Promise<void> {
-    if ((this._initialized) || (!this._initializer)) {
-      this._initialized = true;
-      return Promise.resolve(void 0);
-    }
-    this._initialized = true;
-    return System.import(this._module).then(mod => {
-      return mod[this._initializer]().then((result: IDisposable) => {
-        if (result && result.hasOwnProperty('dispose')) {
-          this._disposables.add(result);
-        }
-      });
-    });
-  }
-
-  /**
-   * Finish connecting and extension to the extension point.
-   */
-  private _connectExtension(extension: Extension): Promise<void> {
-    var receiver = this._receiverFunc;
-    return extension.load().then((result: IExtension<any>) => {
-      var disposable = receiver(result);
-      if (disposable.hasOwnProperty('dispose')) {
-         this._disposables.add(disposable);
-      }
-      return extension.initialize();
-    });
-  }
-
-  private _id = '';
-  private _receiver = '';
-  private _module = '';
-  private _initializer = '';
-  private _initialized = false;
-  private _receiverFunc: (extension: IExtension<any>) => IDisposable = null;
-  private _disposables: DisposableSet = null;
-}
-
-
-/**
- * Implementation of an Extension.
- */
-class Extension implements IDisposable {
-
-  /**
-   * Construct a new Extension.
-   */
-  constructor(options: IExtensionJSON) {
-    this._point = options.point;
-    this._loader = options.loader;
-    this._module = options.module;
-    this._data = options.data;
-    this._extension = {
-      config: options.config,
-      data: void 0,
-      object: void 0
-    };
-    this._initializer = options.initializer;
-    this._disposables = new DisposableSet();
-  }
-
-  /**
-   * Whether the extension has been disposed.
-   */
-  get isDisposed(): boolean {
-    return this._disposables.isDisposed;
-  }
-
-  /**
-   * Dispose of the resources held by the extension.
-   */
-  dispose() {
-    this._extension = null;
-    this._disposables.dispose();
-  }
-
-  /**
-   * Initialize the the extension.
-   */
-  initialize(): Promise<void> {
-    this._extension = null;
-    if (this._initializer) {
-      return System.import(this._module).then(mod => {
-        var initializer = mod[this._initializer];
-        return initializer().then((disposable: IDisposable) => {
-          if (disposable.hasOwnProperty('dispose')) {
-            this._disposables.add(disposable);
-          }
-        });
-      });
-    } else {
-      return Promise.resolve(void 0);
-    }
-  }
-
-  /**
-   * Load the extension.
+   * Load the extension object.
+   *
+   * @returns A promise which resolves to the loaded extension object,
+   *   or rejects if the extension object fails to fully load.
+   *
+   * #### Notes
+   * The first time this method is called, the extension module and its
+   * associated data will be loaded and initialized. All further calls
+   * to this method will return the same resolved promise.
+   *
+   * After the extension is disposed, the returned promise will reject
+   * with an error.
+   *
+   * The consumer should not hold onto the returned promise. Instead,
+   * it should call this method and resolve the returned promise each
+   * time the extension is required (which is typically only once).
    */
   load(): Promise<IExtension<any>> {
-    return Promise.all([this._loadData(), this._loadObject()])
-      .then(() => { return this._extension; });
+    return this._promise || (this._promise = this._loadImpl());
   }
 
   /**
-   * Load the data for the extension.
+   * Create a promise which loads the actual extension.
+   *
+   * This is the primary method which assembles the promise chain.
+   *
+   * If the extension is disposed before the promise resolves, the
+   * returned promise will be rejected will an appropriate error.
    */
-  private _loadData(): Promise<void> {
-    if (!this._data) {
-      return Promise.resolve(void 0);
-    }
-    return System.import(this._data).then(data => {
-      this._extension.data = data;
+  private _loadImpl(): Promise<IExtension<any>> {
+    let pItem = this._loadItem();
+    let pData = this._loadData();
+    return Promise.all([pItem, pData]).then(([item, data]) => {
+      if (this._disposed) throw this._disposedError();
+      return Object.freeze({ id: this._id, item, data, config: this._config });
     });
   }
 
   /**
-   * Load the object for the extension.
+   * Create a promise which loads the extension item.
+   *
+   * This will first load and initialize the main module if given,
+   * then invoke the extension loader function if specified.
+   *
+   * The returned promise will resolve to the extension item or `null`.
+   * It will reject if the main module fails to load or initialize, or
+   * if the loader function is invalid.
    */
-  private _loadObject(): Promise<void> {
-    if (!this._loader) {
-      return Promise.resolve(void 0);
-    }
-    return System.import(this._module).then(mod => {
-      var loader = mod[this._loader] as (() => Promise<any>);
-      return loader().then((result: any) => {
-        this._extension.object = result;
-      });
+  private _loadItem(): Promise<any> {
+    return this._loadMain().then(main => {
+      if (this._disposed) {
+        throw this._disposedError();
+      }
+      if (!main || !this._initializer) {
+        return [main, null];
+      }
+      let initializer = main[this._initializer];
+      if (typeof initializer !== 'function') {
+        throw this._initializerError();
+      }
+      return Promise.all([main, initializer()]);
+    }).then(([main, disposable]) => {
+      if (this._disposed) {
+        safeDispose(disposable);
+        throw this._disposedError();
+      }
+      this._disposable = disposable;
+      return main;
+    }).then(main => {
+      if (this._disposed) {
+        throw this._disposedError();
+      }
+      if (!main || !this._loader) {
+        return null;
+      }
+      let loader = main[this._loader];
+      if (typeof loader !== 'function') {
+        throw this._loaderError();
+      }
+      return Promise.resolve(loader());
     });
   }
 
-  private _point = '';
-  private _loader = '';
-  private _module = '';
-  private _data = '';
-  private _initializer = '';
-  private _extension: IExtension<any> = null;
-  private _disposables: DisposableSet = null;
+  /**
+   * Create a promise which loads the extension JSON data.
+   *
+   * The returned promise will resolve to the JSON data, or null if no
+   * data file was specified. It will reject if the data fails to load.
+   */
+  private _loadData(): Promise<any> {
+    if (this._data) {
+      return System.import(this._data + '!system-json');
+    }
+    return Promise.resolve(null);
+  }
+
+  /**
+   * Create a promise which loads the extension main module.
+   *
+   * The returned promise will resolve the module, or null if no main
+   * module was specified. It will reject if the module fails to load.
+   */
+  private _loadMain(): Promise<any> {
+    if (this._main) {
+      return System.import(this._main);
+    }
+    return Promise.resolve(null);
+  }
+
+  /**
+   * Create an error indicating the extension is disposed.
+   */
+  private _disposedError(): Error {
+    return new Error(`Extension '${this._id}' is disposed.`);
+  }
+
+  /**
+   * Create an error indicating the extension initializer is invalid.
+   */
+  private _initializerError(): Error {
+    return new Error(`Extension '${this._id}' has invalid initializer.`);
+  }
+
+  /**
+   * Create an error indicating the extension loader is invalid.
+   */
+  private _loaderError(): Error {
+    return new Error(`Extension '${this._id}' has invalid loader.`);
+  }
+
+  private _id: string;
+  private _config: any;
+  private _main: string;
+  private _data: string;
+  private _point: string;
+  private _loader: string;
+  private _initializer: string;
+  private _disposable: any = null;
+  private _promise: Promise<IExtension<any>> = null;
+  private _disposed = false;
 }
 
 
-// Map of available extension points by point id.
-var allExtensionPoints = new Map<string, ExtensionPoint>();
-
-
-// Map of available extensions by point id.
-var allExtensions = new Map<string, Extension[]>();
+/**
+ * Dispose of an object which might be a disposable.
+ *
+ * This will invoke the `dispose` method of an object if it exists.
+ * If the object is null or has no such method, this is a no-op.
+ */
+function safeDispose(obj: any): void {
+  if (obj && typeof obj.dispose === 'function') {
+    obj.dispose();
+  }
+}

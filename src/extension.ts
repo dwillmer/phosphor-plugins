@@ -138,10 +138,10 @@ class Extension implements IDisposable {
    */
   constructor(id: string, item: {}, data: {}, config: {}, disposable: {}) {
     this._id = id;
-    this._item = item || null;
-    this._data = data || null;
-    this._config = config || null;
-    this._disposable = disposable || null;
+    this._item = item;
+    this._data = data;
+    this._config = config;
+    this._disposable = disposable;
   }
 
   /**

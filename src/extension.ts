@@ -30,7 +30,7 @@ interface IExtensionSpec {
    *
    * Uniqueness of the id is enforced when the spec is registered. To
    * minimize the possibility of conflicts and remain human-readable,
-   * the id should use the format: `my-package:my-extension-point`.
+   * the id should use the format: `my-package:my-extension`.
    */
   id: string;
 
@@ -47,7 +47,8 @@ interface IExtensionSpec {
    * The path to the main module for the extension.
    *
    * When the extension is loaded, this module will be imported with
-   * `System.import`.
+   * `System.import`. This means that any module format can be used,
+   * provided the system importer is properly configured.
    *
    * The main module does not need to be provided for extensions which
    * only contribute JSON data or configuration to an extension point.

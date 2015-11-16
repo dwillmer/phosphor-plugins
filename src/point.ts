@@ -42,7 +42,8 @@ interface IExtensionPointSpec {
    * The path to the main module for the extension point.
    *
    * When the extension point is loaded, this module will be imported
-   * with  `System.import`.
+   * with `System.import`. This means that any module format can be
+   * used, provided the system importer is properly configured.
    */
   main: string;
 

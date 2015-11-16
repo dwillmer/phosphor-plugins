@@ -121,12 +121,20 @@ interface IExtensionSpec {
 export
 interface IExtension extends IDisposable {
   /**
-   * The globally unique id of the extension.
+   * The globally unique identifier of the extension.
    *
    * #### Notes
    * This is a read-only property.
    */
   id: string;
+
+  /**
+   * The identifier of the target extension point.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  point: string;
 
   /**
    * The behavioral object for the extension.
@@ -183,7 +191,7 @@ function loadExtension(spec: IExtensionSpec): Promise<IExtension> {
     exdisp = disp;
     return loadItem(spec, exmain);
   }).then(item => {
-    return new Extension(spec.id, item, exdata, spec.config, exdisp);
+    return new Extension(spec, item, exdata, exdisp);
   });
 }
 
@@ -283,7 +291,7 @@ class Extension implements IExtension {
   /**
    * Construct a new extension.
    *
-   * @param id - The globally unique identifier of the extension.
+   * @param spec - The extension specification.
    *
    * @param item - The resolved return value of the extension `loader`
    *   function. This may be `null`.
@@ -291,17 +299,14 @@ class Extension implements IExtension {
    * @param data - The loaded and parsed JSON extension data. This may
    *   be `null`.
    *
-   * @param config - The static configuration data. This may be `null`.
-   *
-   * @param disposable - A disposable to invoke when the extension is
-   *   disposed. This may be `null`.
+   * @param disp - A disposable to invoke on extension dispose. This
+   *   may be `null`.
    */
-  constructor(id: string, item: {}, data: {}, config: {}, disposable: {}) {
-    this._id = id;
+  constructor(spec: IExtensionSpec, item: {}, data: {}, disp: {}) {
+    this._spec = spec;
     this._item = item;
     this._data = data;
-    this._config = config;
-    this._disposable = disposable;
+    this._disp = disp;
   }
 
   /**
@@ -319,9 +324,8 @@ class Extension implements IExtension {
     this._disposed = true;
     this._item = null;
     this._data = null;
-    this._config = null;
-    safeDispose(this._disposable);
-    this._disposable = null;
+    safeDispose(this._disp);
+    this._disp = null;
   }
 
   /**
@@ -335,13 +339,23 @@ class Extension implements IExtension {
   }
 
   /**
-   * The globally unique id of the extension.
+   * The globally unique identifier of the extension.
    *
    * #### Notes
    * This is a read-only property.
    */
   get id(): string {
-    return this._id;
+    return this._spec.id;
+  }
+
+  /**
+   * The identifier of the target extension point.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get point(): string {
+    return this._spec.point;
   }
 
   /**
@@ -377,13 +391,12 @@ class Extension implements IExtension {
    * This is a read-only property.
    */
   get config(): {} {
-    return this._config;
+    return this._spec.config || null;
   }
 
-  private _id: string;
   private _item: {};
   private _data: {};
-  private _config: {};
-  private _disposable: {};
+  private _disp: {};
   private _disposed = false;
+  private _spec: IExtensionSpec;
 }

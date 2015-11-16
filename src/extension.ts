@@ -327,10 +327,11 @@ class Extension implements IExtension {
       return;
     }
     this._disposed = true;
+    let disposable = this._disposable;
     this._item = null;
     this._data = null;
-    safeDispose(this._disposable);
     this._disposable = null;
+    safeDispose(disposable);
   }
 
   /**

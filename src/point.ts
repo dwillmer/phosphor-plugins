@@ -205,9 +205,9 @@ type Receiver = (extension: IExtension) => {};
 
 
 /**
- * A type alias for a map of extension id to maybe-disposable.
+ * A type alias for a string map.
  */
-type ExtDispMap = { [key: string]: {} };
+type StringMap<T> = { [key: string]: T };
 
 
 /**
@@ -223,9 +223,9 @@ function safeDispose(obj: any): void {
 
 
 /**
- * Safely dispose of the objects in the map.
+ * Safely dispose of maybe-disposables in a map.
  */
-function disposeMap(map: ExtDispMap): void {
+function safeDisposeMap(map: StringMap<{}>): void {
   for (let key in map) safeDispose(map[key]);
 }
 
@@ -263,11 +263,13 @@ class ExtensionPoint implements IExtensionPoint {
       return;
     }
     this._disposed = true;
-    this._receiver = null;
-    disposeMap(this._map);
+    let map = this._map;
+    let disposable = this._disposable;
     this._map = null;
-    safeDispose(this._disposable);
+    this._receiver = null;
     this._disposable = null;
+    safeDisposeMap(map);
+    safeDispose(disposable);
   }
 
   /**
@@ -344,5 +346,5 @@ class ExtensionPoint implements IExtensionPoint {
   private _disposed = false;
   private _receiver: Receiver;
   private _spec: IExtensionPointSpec;
-  private _map: DisposablesMap = Object.create(null);
+  private _map: StringMap<{}> = Object.create(null);
 }

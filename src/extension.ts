@@ -233,6 +233,8 @@ function loadMain(spec: IExtensionSpec): Promise<any> {
  *
  * @param spec - The specification for the extension.
  *
+ * @param main - The main extension module. This may be `null`.
+ *
  * @returns A promise which resolves to the result of the initializer,
  *   or `null` if no initializer is specified.
  *
@@ -254,6 +256,8 @@ function initMain(spec: IExtensionSpec, main: any): Promise<{}> {
  * Load the behavioral item for an extension spec.
  *
  * @param spec - The specification for the extension.
+ *
+ * @param main - The main extension module. This may be `null`.
  *
  * @returns A promise which resolves to the result of the loader,
  *   or `null` if no loader is specified.
@@ -285,7 +289,7 @@ function safeDispose(obj: any): void {
 
 
 /**
- * A concrete implementation of IExtension.
+ * A concrete implementation of `IExtension`.
  */
 class Extension implements IExtension {
   /**
@@ -299,14 +303,14 @@ class Extension implements IExtension {
    * @param data - The loaded and parsed JSON extension data. This may
    *   be `null`.
    *
-   * @param disp - A disposable to invoke on extension dispose. This
-   *   may be `null`.
+   * @param disposable - A disposable to invoke on extension dispose.
+   *   This may be `null`.
    */
-  constructor(spec: IExtensionSpec, item: {}, data: {}, disp: {}) {
+  constructor(spec: IExtensionSpec, item: {}, data: {}, disposable: {}) {
     this._spec = spec;
     this._item = item;
     this._data = data;
-    this._disp = disp;
+    this._disposable = disposable;
   }
 
   /**
@@ -324,8 +328,8 @@ class Extension implements IExtension {
     this._disposed = true;
     this._item = null;
     this._data = null;
-    safeDispose(this._disp);
-    this._disp = null;
+    safeDispose(this._disposable);
+    this._disposable = null;
   }
 
   /**
@@ -396,7 +400,7 @@ class Extension implements IExtension {
 
   private _item: {};
   private _data: {};
-  private _disp: {};
+  private _disposable: {};
   private _disposed = false;
   private _spec: IExtensionSpec;
 }

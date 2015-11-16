@@ -119,113 +119,44 @@ interface IExtensionSpec {
  * matching extension point when both are registered and loaded.
  */
 export
-class Extension implements IDisposable {
+interface IExtension extends IDisposable {
   /**
-   * Construct a new extension.
-   *
-   * @param id - The globally unique identifier of the extension.
-   *
-   * @param item - The resolved return value of the extension `loader`
-   *   function. This may be `null`.
-   *
-   * @param data - The loaded and parsed JSON extension data. This may
-   *   be `null`.
-   *
-   * @param config - The static configuration data. This may be `null`.
-   *
-   * @param disposable - A disposable to invoke when the extension is
-   *   disposed. This may be `null`.
-   */
-  constructor(id: string, item: {}, data: {}, config: {}, disposable: {}) {
-    this._id = id;
-    this._item = item;
-    this._data = data;
-    this._config = config;
-    this._disposable = disposable;
-  }
-
-  /**
-   * Dispose of the resources held by the extension.
-   *
-   * #### Notes
-   * All calls made after the first call to this method are a no-op.
-   *
-   * It is generally unsafe to use the extension after it is disposed.
-   */
-  dispose(): void {
-    if (this._disposed) {
-      return;
-    }
-    this._disposed = true;
-    this._item = null;
-    this._data = null;
-    this._config = null;
-    safeDispose(this._disposable);
-    this._disposable = null;
-  }
-
-  /**
-   * Test whether the extension has been disposed.
+   * The globally unique id of the extension.
    *
    * #### Notes
    * This is a read-only property.
    */
-  get isDisposed(): boolean {
-    return this._disposed;
-  }
+  id: string;
 
   /**
-   * Get the globally unique id of the extension.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get id(): string {
-    return this._id;
-  }
-
-  /**
-   * Get the behavioral object for the extension.
+   * The behavioral object for the extension.
    *
    * #### Notes
    * This may be `null`.
    *
    * This is a read-only property.
    */
-  get item(): {} {
-    return this._item;
-  }
+  item: {};
 
   /**
-   * Get the parsed JSON data for the extension.
+   * The parsed JSON data for the extension.
    *
    * #### Notes
    * This may be `null`.
    *
    * This is a read-only property.
    */
-  get data(): {} {
-    return this._data;
-  }
+  data: {};
 
   /**
-   * Get the static configuration data for the extension.
+   * The static configuration data for the extension.
    *
    * #### Notes
    * This may be `null`.
    *
    * This is a read-only property.
    */
-  get config(): {} {
-    return this._config;
-  }
-
-  private _id: string;
-  private _item: {};
-  private _data: {};
-  private _config: {};
-  private _disposable: {};
-  private _disposed = false;
+  config: {};
 }
 
 
@@ -238,7 +169,7 @@ class Extension implements IDisposable {
  *   reject if the extension fails to load or is otherwise invalid.
  */
 export
-function loadExtension(spec: IExtensionSpec): Promise<Extension> {
+function loadExtension(spec: IExtensionSpec): Promise<IExtension> {
   let exdata: {};
   let exdisp: {};
   let exmain: any;
@@ -342,4 +273,117 @@ function loadItem(spec: IExtensionSpec, main: any): Promise<{}> {
  */
 function safeDispose(obj: any): void {
   if (obj && typeof obj.dispose === 'function') obj.dispose();
+}
+
+
+/**
+ * A concrete implementation of IExtension.
+ */
+class Extension implements IExtension {
+  /**
+   * Construct a new extension.
+   *
+   * @param id - The globally unique identifier of the extension.
+   *
+   * @param item - The resolved return value of the extension `loader`
+   *   function. This may be `null`.
+   *
+   * @param data - The loaded and parsed JSON extension data. This may
+   *   be `null`.
+   *
+   * @param config - The static configuration data. This may be `null`.
+   *
+   * @param disposable - A disposable to invoke when the extension is
+   *   disposed. This may be `null`.
+   */
+  constructor(id: string, item: {}, data: {}, config: {}, disposable: {}) {
+    this._id = id;
+    this._item = item;
+    this._data = data;
+    this._config = config;
+    this._disposable = disposable;
+  }
+
+  /**
+   * Dispose of the resources held by the extension.
+   *
+   * #### Notes
+   * All calls made after the first call to this method are a no-op.
+   *
+   * It is generally unsafe to use the extension after it is disposed.
+   */
+  dispose(): void {
+    if (this._disposed) {
+      return;
+    }
+    this._disposed = true;
+    this._item = null;
+    this._data = null;
+    this._config = null;
+    safeDispose(this._disposable);
+    this._disposable = null;
+  }
+
+  /**
+   * Test whether the extension has been disposed.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get isDisposed(): boolean {
+    return this._disposed;
+  }
+
+  /**
+   * The globally unique id of the extension.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get id(): string {
+    return this._id;
+  }
+
+  /**
+   * The behavioral object for the extension.
+   *
+   * #### Notes
+   * This may be `null`.
+   *
+   * This is a read-only property.
+   */
+  get item(): {} {
+    return this._item;
+  }
+
+  /**
+   * The parsed JSON data for the extension.
+   *
+   * #### Notes
+   * This may be `null`.
+   *
+   * This is a read-only property.
+   */
+  get data(): {} {
+    return this._data;
+  }
+
+  /**
+   * The static configuration data for the extension.
+   *
+   * #### Notes
+   * This may be `null`.
+   *
+   * This is a read-only property.
+   */
+  get config(): {} {
+    return this._config;
+  }
+
+  private _id: string;
+  private _item: {};
+  private _data: {};
+  private _config: {};
+  private _disposable: {};
+  private _disposed = false;
 }

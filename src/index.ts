@@ -7,5 +7,7 @@
 |----------------------------------------------------------------------------*/
 'use strict';
 
-export * from './plugin';
 export * from './extension';
+//export * from './plugin';
+export * from './point';
+export * from './registry';

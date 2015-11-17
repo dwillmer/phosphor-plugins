@@ -191,7 +191,7 @@ function initMain(spec: IExtensionPointSpec, main: any): Promise<{}> {
  */
 function lookupReceiver(spec: IExtensionPointSpec, main: any): Receiver {
   let receiver = main[spec.receiver];
-  if (typeof receiver !=== 'function') {
+  if (typeof receiver !== 'function') {
     throw new Error(`Extension point '${spec.id}' has invalid receiver.`);
   }
   return receiver;
@@ -307,8 +307,8 @@ class ExtensionPoint implements IExtensionPoint {
     if (this._disposed) {
       throw new Error('Extension point is disposed.');
     }
-    if (this._id !== extension.point) {
-      let idA = this._id;
+    if (this.id !== extension.point) {
+      let idA = this.id;
       let idB = extension.point;
       throw new Error(`Extension point mismatch: '${idA}' != '${idB}'`);
     }

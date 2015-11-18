@@ -305,6 +305,10 @@ function loadPointRecord(record: IPointRecord): Promise<void> {
       record.value = point;
       record.state = RecordState.Loaded;
     }
+  }).catch(err => {
+    console.error(err);
+    record.promise = null;
+    record.state = RecordState.Disposed;
   });
 
   // Update the record to the loading state.
@@ -347,6 +351,10 @@ function loadExtRecord(record: IExtRecord): Promise<void> {
       record.value = extension;
       record.state = RecordState.Loaded;
     }
+  }).catch(err => {
+    console.error(err);
+    record.promise = null;
+    record.state = RecordState.Disposed;
   });
 
   // Update the record to the loading state.
@@ -388,25 +396,13 @@ function loadMatchingPoint(extRecord: IExtRecord): void {
  * This will load and resolve the loader promises for both records.
  * Once both promises are successfully resolved, the extension will
  * be added to the extension point.
- *
- * If either record is disposed during loading, this is a no-op.
  */
 function loadMatch(pointRecord: IPointRecord, extRecord: IExtRecord): void {
-  let p1 = loadPointRecord(pointRecord).catch(err => {
-    console.error(err);
-    disposePoint(pointRecord.spec.id);
-  });
-  let p2 = loadExtRecord(extRecord).catch(err => {
-    console.error(err);
-    disposeExt(extRecord.spec.id);
-  });
+  let p1 = loadPointRecord(pointRecord);
+  let p2 = loadExtRecord(extRecord);
   Promise.all([p1, p2]).then(() => {
-    if (pointRecord.state !== RecordState.Loaded) {
-      return;
-    }
-    if (extRecord.state !== RecordState.Loaded) {
-      return;
-    }
-    pointRecord.value.add(extRecord.value);
+    let s1 = pointRecord.state === RecordState.Loaded;
+    let s2 = extRecord.state === RecordState.Loaded;
+    if (s1 && s2) pointRecord.value.add(extRecord.value);
   });
 }

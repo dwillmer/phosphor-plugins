@@ -19,9 +19,8 @@ import {
  * system to lazily load and initialize the extension when the matching
  * extension point is registered.
  *
- * User code will not typically create an extension spec directly. The
- * plugin system will create a spec automatically using the definition
- * contained in the plugin's `package.json`.
+ * User code will not typically create a spec directly. Instead, the
+ * plugin system will create a spec from the `phosphor-plugin.json`.
  */
 export
 interface IExtensionSpec {
@@ -30,7 +29,7 @@ interface IExtensionSpec {
    *
    * Uniqueness of the id is enforced when the spec is registered. To
    * minimize the possibility of conflicts and remain human-readable,
-   * the id should use the format: `my-package:my-extension`.
+   * the id should use the format: `my-plugin:my-extension`.
    */
   id: string;
 
@@ -50,10 +49,9 @@ interface IExtensionSpec {
    * `System.import`. This means that any module format can be used,
    * provided the system importer is properly configured.
    *
-   * The main module does not need to be provided for extensions which
-   * only contribute JSON data or configuration to an extension point.
+   * This may be an empty string if there is no main module.
    */
-  main?: string;
+  main: string;
 
   /**
    * The name of the initializer function for the extension.
@@ -67,10 +65,9 @@ interface IExtensionSpec {
    * the initializer resolves. This allows the extension to perform
    * asynchronous setup before loading the actual extension object.
    *
-   * An initializer does not need to be provided if the extension does
-   * not require extra initialization.
+   * This may be an empty string if there is no initializer.
    */
-  initializer?: string;
+  initializer: string;
 
   /**
    * The name of the loader function for the extension.
@@ -83,21 +80,20 @@ interface IExtensionSpec {
    * The loader function will not be called before the promise returned
    * by the [[initializer]] function is resolved.
    *
-   * A loader does not need to be provided if the extension does not
-   * provide a runtime behavioral object.
+   * This may be an empty string if there is no loader.
    */
-  loader?: string;
+  loader: string;
 
   /**
    * The path to the JSON data file for the extension.
    *
    * Some extension points can make use of data defined as JSON. This
-   * path will be used to load and parse the JSON into an object and
-   * provide the result to the extension point.
+   * path will be loaded using `System.import`, and should resolve to
+   * a parsed JSON object to provide to the extention point.
    *
-   * If provided, the contents of this file must be valid JSON.
+   * This may be an empty string if there is no data file.
    */
-  data?: string;
+  data: string;
 
   /**
    * Extra static configuration data for the extension.
@@ -107,9 +103,9 @@ interface IExtensionSpec {
    * here in the form of an already-parsed JSON object and will be
    * provided directly to the extension point.
    *
-   * If provided, the config data should be treated as immutable.
+   * This may be null if there is no static config data.
    */
-  config?: {};
+  config: {};
 }
 
 
@@ -207,7 +203,7 @@ function loadExtension(spec: IExtensionSpec): Promise<IExtension> {
  */
 function loadData(spec: IExtensionSpec): Promise<{}> {
   if (spec.data) {
-    return System.import(spec.data + '!system-json');
+    return System.import(spec.data);
   }
   return Promise.resolve(null);
 }
@@ -397,7 +393,7 @@ class Extension implements IExtension {
    * This is a read-only property.
    */
   get config(): {} {
-    return this._spec.config || null;
+    return this._spec.config;
   }
 
   private _item: {};

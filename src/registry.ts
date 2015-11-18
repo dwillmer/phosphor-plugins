@@ -392,17 +392,21 @@ function loadMatchingPoint(extRecord: IExtRecord): void {
  * If either record is disposed during loading, this is a no-op.
  */
 function loadMatch(pointRecord: IPointRecord, extRecord: IExtRecord): void {
-  let p1 = loadExtRecord(extRecord);
-  let p2 = loadPointRecord(pointRecord);
+  let p1 = loadPointRecord(pointRecord).catch(err => {
+    console.error(err);
+    disposePoint(pointRecord.spec.id);
+  });
+  let p2 = loadExtRecord(extRecord).catch(err => {
+    console.error(err);
+    disposeExt(extRecord.spec.id);
+  });
   Promise.all([p1, p2]).then(() => {
-    if (extRecord.state !== RecordState.Loaded) {
-      return;
-    }
     if (pointRecord.state !== RecordState.Loaded) {
       return;
     }
+    if (extRecord.state !== RecordState.Loaded) {
+      return;
+    }
     pointRecord.value.add(extRecord.value);
-  }).catch(e => {
-    console.error(e);
   });
 }

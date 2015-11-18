@@ -59,7 +59,7 @@ interface IExtensionSpec {
    * This is the name of a function in the [[main]] module which acts
    * as the initializer for the extension. It takes no arguments and
    * should return `null`, `IDisposable`, or `Promise<IDisposable>`.
-   * The disposable will be disposed when the extension is unloaded.
+   * The disposable will be called when the extension is unloaded.
    *
    * The [[loader]] will not be invoked until the promise returned by
    * the initializer resolves. This allows the extension to perform
@@ -89,7 +89,7 @@ interface IExtensionSpec {
    *
    * Some extension points can make use of data defined as JSON. This
    * path will be loaded using `System.import`, and should resolve to
-   * a parsed JSON object to provide to the extention point.
+   * a parsed JSON object to be provided to the extention point.
    *
    * This may be an empty string if there is no data file.
    */
@@ -103,7 +103,7 @@ interface IExtensionSpec {
    * here in the form of an already-parsed JSON object and will be
    * provided directly to the extension point.
    *
-   * This may be null if there is no static config data.
+   * This may be `null` if there is no static config data.
    */
   config: {};
 }
@@ -171,7 +171,7 @@ interface IExtension extends IDisposable {
  * @param spec - The specification for the extension.
  *
  * @returns A promise which resolves to a new extension object, or
- *   reject if the extension fails to load or is otherwise invalid.
+ *   rejects if the extension fails to load or is otherwise invalid.
  */
 export
 function loadExtension(spec: IExtensionSpec): Promise<IExtension> {
@@ -277,8 +277,6 @@ function loadItem(spec: IExtensionSpec, main: any): Promise<{}> {
  * Safely dispose something which may or may not be a disposable.
  *
  * This will invoke the `dispose` method of the object if present.
- *
- * This function is null-safe.
  */
 function safeDispose(obj: any): void {
   if (obj && typeof obj.dispose === 'function') obj.dispose();

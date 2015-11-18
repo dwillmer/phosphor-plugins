@@ -59,7 +59,7 @@ interface IExtensionPointSpec {
    * perform asynchronous setup after its module is loaded, but before
    * receiving extensions.
    *
-   * This may be an empty string if there is no initializer.
+   * This should be an empty string if there is no initializer.
    */
   initializer: string;
 
@@ -68,7 +68,7 @@ interface IExtensionPointSpec {
    *
    * This is the name of a function in the [[main]] module which acts
    * as the receiver for the extension point. It takes an argument of
-   * type `Extension` and returns an `IDisposable`. The disposable
+   * type `IExtension` and returns an `IDisposable`. The disposable
    * will be called when the extension is unloaded.
    *
    * The receiver function will not be called before the promise
@@ -79,7 +79,9 @@ interface IExtensionPointSpec {
 
 
 /**
- * An object which represents an extensible point in an application.
+ * An object which represents an extension point in an application.
+ *
+ * User code will not typically interact with these objects directly.
  */
 export
 interface IExtensionPoint extends IDisposable {
@@ -107,7 +109,7 @@ interface IExtensionPoint extends IDisposable {
   /**
    * Remove an extension from the extension point.
    *
-   * @param id - The id of the extension point.
+   * @param id - The id of the extension to remove.
    *
    * @throws An error if the extension extension point is disposed.
    *
@@ -214,8 +216,6 @@ type StringMap<T> = { [key: string]: T };
  * Safely dispose something which may or may not be a disposable.
  *
  * This will invoke the `dispose` method of the object if present.
- *
- * This function is null-safe.
  */
 function safeDispose(obj: any): void {
   if (obj && typeof obj.dispose === 'function') obj.dispose();
@@ -321,9 +321,9 @@ class ExtensionPoint implements IExtensionPoint {
   /**
    * Remove an extension from the extension point.
    *
-   * @param id - The id of the extension point.
+   * @param id - The id of the extension to remove.
    *
-   * @throws An error if the extension extension point is disposed.
+   * @throws An error if the extension point is disposed.
    *
    * #### Notes
    * This is a no-op if no matching extension has been added.

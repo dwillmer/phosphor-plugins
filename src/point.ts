@@ -23,9 +23,8 @@ import {
  * plugin system to lazily load and initialize the extension point when
  * matching extensions are registered.
  *
- * User code will not typically create a spec directly. The plugin
- * system will create a spec automatically using the definition
- * contained in the plugin's `package.json`.
+ * User code will not typically create a spec directly. Instead, the
+ * plugin system will create a spec from the `phosphor-plugin.json`.
  */
 export
 interface IExtensionPointSpec {
@@ -34,7 +33,7 @@ interface IExtensionPointSpec {
    *
    * Uniqueness of the id is enforced when the spec is registered. To
    * minimize the possibility of conflicts and remain human-readable,
-   * the id should use the format: `my-package:my-extension-point`.
+   * the id should use the format: `my-plugin:my-extension-point`.
    */
   id: string;
 

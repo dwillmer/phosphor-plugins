@@ -48,33 +48,34 @@ interface IExtensionPointSpec {
   main: string;
 
   /**
-   * The name of the receiver function for the extension point.
-   *
-   * This is the name of a function in the [[main]] module which acts
-   * as the receiver for the extension point. It takes an argument of
-   * type `Extension` and returns an `IDisposable`. The disposable
-   * will be disposed when the extension is unloaded.
-   *
-   * The receiver function will not be called before the promise
-   * returned by the [[initializer]] function is resolved.
-   */
-  receiver: string;
-
-  /**
    * The name of the initializer function for the extension point.
    *
    * This is the name of a function in the [[main]] module which acts
    * as the initializer for the extension point. It takes no arguments
    * and should return `null`, `IDisposable`, or `Promise<IDisposable>`.
-   * The disposable will be disposed when the extension point is
-   * unloaded.
+   * The disposable will be called when the extension point is unloaded.
    *
    * The [[receiver]] will not be invoked until the promise returned
    * by the initializer resolves. This allows the extension point to
    * perform asynchronous setup after its module is loaded, but before
    * receiving extensions.
+   *
+   * This may be an empty string if there is no initializer.
    */
-  initializer?: string;
+  initializer: string;
+
+  /**
+   * The name of the receiver function for the extension point.
+   *
+   * This is the name of a function in the [[main]] module which acts
+   * as the receiver for the extension point. It takes an argument of
+   * type `Extension` and returns an `IDisposable`. The disposable
+   * will be called when the extension is unloaded.
+   *
+   * The receiver function will not be called before the promise
+   * returned by the [[initializer]] function is resolved.
+   */
+  receiver: string;
 }
 
 

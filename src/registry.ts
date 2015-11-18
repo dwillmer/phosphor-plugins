@@ -66,11 +66,11 @@ function registerExtensionPoint(spec: IExtensionPointSpec): IDisposable {
 /**
  * Register an extension and connect matching extension points.
  *
- * @param spec - The specification for the extension point.
+ * @param spec - The specification for the extension.
  *
- * @returns A disposable which will unload the extension point.
+ * @returns A disposable which will unload the extension.
  *
- * @throws An error if the extension point id is already registered.
+ * @throws An error if the extension id is already registered.
  */
 export
 function registerExtension(spec: IExtensionSpec): IDisposable {
@@ -115,7 +115,7 @@ const enum RecordState {
  */
 interface IPointRecord {
   /**
-   * The lifecycle state of the record.
+   * The life cycle state of the record.
    */
   state: RecordState;
 
@@ -127,14 +127,14 @@ interface IPointRecord {
   /**
    * The extension point object.
    *
-   * This will be null until the record is fully loaded.
+   * This will be `null` until the record is fully loaded.
    */
   value: IExtensionPoint;
 
   /**
    * The loader promise for the record.
    *
-   * This will be null unless the record is loading.
+   * This will be `null` unless the record is loading.
    */
   promise: Promise<void>;
 }
@@ -145,7 +145,7 @@ interface IPointRecord {
  */
 interface IExtRecord {
   /**
-   * The lifecycle state of the record.
+   * The life cycle state of the record.
    */
   state: RecordState;
 
@@ -157,14 +157,14 @@ interface IExtRecord {
   /**
    * The extension object.
    *
-   * This will be null until the record is fully loaded.
+   * This will be `null` until the record is fully loaded.
    */
   value: IExtension;
 
   /**
    * The loader promise for the record.
    *
-   * This will be null unless the record is loading.
+   * This will be `null` unless the record is loading.
    */
   promise: Promise<void>;
 }
@@ -278,8 +278,7 @@ function disposeExt(id: string): void {
  * Fully load the contents of an extension point record.
  *
  * The record may be disposed before the returned promise is resolved,
- * so the caller should validate the record state after resolving the
- * promise.
+ * so the caller must still validate the record state after resolving.
  */
 function loadPointRecord(record: IPointRecord): Promise<void> {
   // If the record is loaded or disposed, there is nothing to do.
@@ -321,8 +320,7 @@ function loadPointRecord(record: IPointRecord): Promise<void> {
  * Fully load the contents of an extension record.
  *
  * The record may be disposed before the returned promise is resolved,
- * so the caller should validate the record state after resolving the
- * promise.
+ * so the caller must still validate the record state after resolving.
  */
 function loadExtRecord(record: IExtRecord): Promise<void> {
   // If the record is loaded or disposed, there is nothing to do.

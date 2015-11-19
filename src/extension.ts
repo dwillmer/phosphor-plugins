@@ -27,35 +27,45 @@ interface IExtensionSpec {
   /**
    * The globally unique id of the extension.
    *
+   * #### Notes
    * Uniqueness of the id is enforced when the spec is registered. To
    * minimize the possibility of conflicts and remain human-readable,
    * the id should use the format: `my-plugin:my-extension`.
+   *
+   * This should be a read-only property.
    */
   id: string;
 
   /**
    * The id of the extension point to which the extension contributes.
    *
+   * #### Notes
    * It is **not** necessary for the extension point to be registered
    * before the extension. The extension will be loaded as soon as a
    * matching extension point is registered.
+   *
+   * This should be a read-only property.
    */
   point: string;
 
   /**
    * The path to the main module for the extension.
    *
+   * #### Notes
    * When the extension is loaded, this module will be imported with
    * `System.import`. This means that any module format can be used,
    * provided the system importer is properly configured.
    *
    * This may be an empty string if there is no main module.
+   *
+   * This should be a read-only property.
    */
   main: string;
 
   /**
    * The name of the initializer function for the extension.
    *
+   * #### Notes
    * This is the name of a function in the [[main]] module which acts
    * as the initializer for the extension. It takes no arguments and
    * should return `null`, `IDisposable`, or `Promise<IDisposable>`.
@@ -66,12 +76,15 @@ interface IExtensionSpec {
    * asynchronous setup before loading the actual extension object.
    *
    * This may be an empty string if there is no initializer.
+   *
+   * This should be a read-only property.
    */
   initializer: string;
 
   /**
    * The name of the loader function for the extension.
    *
+   * #### Notes
    * This is the name of a function in the [[main]] module which acts
    * as the object loader for the extension. It takes no arguments and
    * should return an object or a `Promise` to an object of the type
@@ -81,29 +94,37 @@ interface IExtensionSpec {
    * by the [[initializer]] function is resolved.
    *
    * This may be an empty string if there is no loader.
+   *
+   * This should be a read-only property.
    */
   loader: string;
 
   /**
    * The path to the JSON data file for the extension.
    *
+   * #### Notes
    * Some extension points can make use of data defined as JSON. This
    * path will be loaded using `System.import`, and should resolve to
    * a parsed JSON object to be provided to the extention point.
    *
    * This may be an empty string if there is no data file.
+   *
+   * This should be a read-only property.
    */
   data: string;
 
   /**
    * Extra static configuration data for the extension.
    *
+   * #### Notes
    * Some extension points can make use of extra static declarative
    * data associated with an extension. That data can be specified
    * here in the form of an already-parsed JSON object and will be
    * provided directly to the extension point.
    *
    * This may be `null` if there is no static config data.
+   *
+   * This should be a read-only property.
    */
   config: {};
 }
@@ -121,7 +142,7 @@ interface IExtension extends IDisposable {
    * The globally unique identifier of the extension.
    *
    * #### Notes
-   * This is a read-only property.
+   * This should be a read-only property.
    */
   id: string;
 
@@ -129,7 +150,7 @@ interface IExtension extends IDisposable {
    * The identifier of the target extension point.
    *
    * #### Notes
-   * This is a read-only property.
+   * This should be a read-only property.
    */
   point: string;
 
@@ -139,7 +160,7 @@ interface IExtension extends IDisposable {
    * #### Notes
    * This may be `null`.
    *
-   * This is a read-only property.
+   * This should be a read-only property.
    */
   item: {};
 
@@ -149,7 +170,7 @@ interface IExtension extends IDisposable {
    * #### Notes
    * This may be `null`.
    *
-   * This is a read-only property.
+   * This should be a read-only property.
    */
   data: {};
 
@@ -159,7 +180,7 @@ interface IExtension extends IDisposable {
    * #### Notes
    * This may be `null`.
    *
-   * This is a read-only property.
+   * This should be a read-only property.
    */
   config: {};
 }

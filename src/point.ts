@@ -31,24 +31,31 @@ interface IExtensionPointSpec {
   /**
    * The globally unique id of the extension point.
    *
+   * #### Notes
    * Uniqueness of the id is enforced when the spec is registered. To
    * minimize the possibility of conflicts and remain human-readable,
    * the id should use the format: `my-plugin:my-extension-point`.
+   *
+   * This should be a read-only property.
    */
   id: string;
 
   /**
    * The path to the main module for the extension point.
    *
+   * #### Notes
    * When the extension point is loaded, this module will be imported
    * with `System.import`. This means that any module format can be
    * used, provided the system importer is properly configured.
+   *
+   * This should be a read-only property.
    */
   main: string;
 
   /**
    * The name of the initializer function for the extension point.
    *
+   * #### Notes
    * This is the name of a function in the [[main]] module which acts
    * as the initializer for the extension point. It takes no arguments
    * and should return `null`, `IDisposable`, or `Promise<IDisposable>`.
@@ -60,12 +67,15 @@ interface IExtensionPointSpec {
    * receiving extensions.
    *
    * This should be an empty string if there is no initializer.
+   *
+   * This should be a read-only property.
    */
   initializer: string;
 
   /**
    * The name of the receiver function for the extension point.
    *
+   * #### Notes
    * This is the name of a function in the [[main]] module which acts
    * as the receiver for the extension point. It takes an argument of
    * type `IExtension` and returns an `IDisposable`. The disposable
@@ -73,6 +83,8 @@ interface IExtensionPointSpec {
    *
    * The receiver function will not be called before the promise
    * returned by the [[initializer]] function is resolved.
+   *
+   * This should be a read-only property.
    */
   receiver: string;
 }
@@ -89,7 +101,7 @@ interface IExtensionPoint extends IDisposable {
    * The globally unique id of the extension point.
    *
    * #### Notes
-   * This is a read-only property.
+   * This should be a read-only property.
    */
   id: string;
 

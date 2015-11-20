@@ -560,6 +560,47 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
 }
 
 
+/**
+ * Dispose of the extension record with the specified id.
+ */
+function disposeExtension(id: string): void {
+  // Do nothing if the id is not registered.
+  if (!(id in extensionRegistry)) {
+    return;
+  }
+
+  // Delete the registration record.
+  let record = extensionRegistry[id];
+  delete extensionRegistry[id];
+
+  // Do nothing if the record is disposed.
+  if (record.state === RecordState.Disposed) {
+    return;
+  }
+
+  // Do nothing if the record is unloaded.
+  if (record.state === RecordState.Unloaded) {
+    return;
+  }
+
+  // If the record is loading, mark it as disposed. The loader
+  // will check for this condition and handle it on completion.
+  if (record.state === RecordState.Loading) {
+    record.state = RecordState.Disposed;
+    return;
+  }
+
+  // Remove the extension from the matching extension point, if any.
+  let other = pointRegistry[record.value.point];
+  if (other && other.value) other.value.remove(id);
+
+  // Dispose of the extension.
+  record.state = RecordState.Disposed;
+  record.value.dispose();
+  safeDispose(record.disposable);
+}
+
+
 //-----------------------------------------------------------------------------
 // Extension Point Implementation
 //-----------------------------------------------------------------------------
@@ -843,6 +884,43 @@ function loadPoint(record: IPointRecord): Promise<void> {
 
   // Return the new loader promise.
   return promise;
+}
+
+
+/**
+ * Dispose of the extension point record with the specified id.
+ */
+function disposePoint(id: string): void {
+  // Do nothing if the id is not registered.
+  if (!(id in pointRegistry)) {
+    return;
+  }
+
+  // Delete the registration record.
+  let record = pointRegistry[id];
+  delete pointRegistry[id];
+
+  // Do nothing if the record is disposed.
+  if (record.state === RecordState.Disposed) {
+    return;
+  }
+
+  // Do nothing if the record is unloaded.
+  if (record.state === RecordState.Unloaded) {
+    return;
+  }
+
+  // If the record is loading, mark it as disposed. The loader
+  // will check for this condition and handle it on completion.
+  if (record.state === RecordState.Loading) {
+    record.state = RecordState.Disposed;
+    return;
+  }
+
+  // Dispose of the extension point.
+  record.state = RecordState.Disposed;
+  record.value.dispose();
+  safeDispose(record.disposable);
 }
 
 

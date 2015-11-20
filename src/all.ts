@@ -220,7 +220,7 @@ function createMap<T>(): StringMap<T> {
 /**
  * Safely dispose of something which may be a disposable.
  *
- * Errors will be caught and logged to the console.
+ * All errors will be caught and logged to the console.
  */
 function safeDispose(item: any): void {
   if (item && typeof item.dispose === 'function') {
@@ -405,8 +405,6 @@ interface IExtensionRecord {
 
   /**
    * The specification of the extension.
-   *
-   * This will be `null` for manually registered extensions.
    */
   spec: IExtensionSpec;
 
@@ -419,8 +417,6 @@ interface IExtensionRecord {
 
   /**
    * A maybe-disposable to invoke after disposing the extension.
-   *
-   * This will be `null` for manually registered extensions.
    */
   disposable: any;
 
@@ -440,9 +436,28 @@ var extensionRegistry = createMap<IExtensionRecord>();
 
 
 /**
- * Ensure an extension record is fully loaded.
+ * Register an extension spec and connect the matching extension point.
  *
- * If the record `state` is `Unloaded`, the `spec` must not be `null`.
+ * This will throw an error if the extension id is already registered.
+ */
+function registerExtensionSpec(spec: IExtensionSpec): void {
+  if (spec.id in extensionRegistry) {
+    throw new Error(`Extension '${spec.id}' is already registered.`);
+  }
+  let record: IExtensionRecord = {
+    state: RecordState.Unloaded,
+    spec: spec,
+    value: null,
+    disposable: null,
+    promise: null,
+  };
+  extensionRegistry[spec.id] = record;
+  loadMatchingPoint(record);
+}
+
+
+/**
+ * Ensure an extension record is fully loaded.
  *
  * It is possible for the the record to be disposed before the loader
  * promise is resolved, so the caller must validate the record state
@@ -536,8 +551,11 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
 
   }).catch(err => {
 
-    // Log any errors which occur and then dispose the record.
+    // If an error occurs while loading, log it to the console.
+    console.error(`Error occured while loading extension '${spec.id}'.`);
     console.error(err);
+
+    // Dispose and unregister the record.
     record.state = RecordState.Disposed;
     delete extensionRegistry[spec.id];
     safeDispose(record.disposable);
@@ -591,7 +609,7 @@ function disposeExtension(id: string): void {
   }
 
   // Remove the extension from the matching extension point, if any.
-  let other = pointRegistry[record.value.point];
+  let other = pointRegistry[record.spec.point];
   if (other && other.value) other.value.remove(id);
 
   // Dispose of the extension.
@@ -676,7 +694,7 @@ class ExtensionPoint implements IExtensionPoint {
    */
   add(extension: IExtension): void {
     if (this._disposed) {
-      throw new Error(`Extension point ${this._id} is disposed.`);
+      throw new Error(`Extension point '${this._id}' is disposed.`);
     }
     if (extension.id in this._map) {
       return;
@@ -694,7 +712,7 @@ class ExtensionPoint implements IExtensionPoint {
    */
   remove(id: string): void {
     if (this._disposed) {
-      throw new Error(`Extension point ${this._id} is disposed.`);
+      throw new Error(`Extension point '${this._id}' is disposed.`);
     }
     if (!(id in this._map)) {
       return;
@@ -748,8 +766,6 @@ interface IPointRecord {
 
   /**
    * The specification of the extension point.
-   *
-   * This will be `null` for manually registered extension points.
    */
   spec: IPointSpec;
 
@@ -762,8 +778,6 @@ interface IPointRecord {
 
   /**
    * A maybe-disposable to invoke after disposing the extension point.
-   *
-   * This will be `null` for manually registered extension points.
    */
   disposable: any;
 
@@ -783,9 +797,28 @@ var pointRegistry = createMap<IPointRecord>();
 
 
 /**
- * Ensure an extension point record is fully loaded.
+ * Register a point spec and connect the matching extensions.
  *
- * If the record `state` is `Unloaded`, the `spec` must not be `null`.
+ * This will throw an error if the point id is already registered.
+ */
+function registerPointSpec(spec: IPointSpec): void {
+  if (spec.id in pointRegistry) {
+    throw new Error(`Extension point '${spec.id}' is already registered.`);
+  }
+  let record: IPointRecord = {
+    state: RecordState.Unloaded,
+    spec: spec,
+    value: null,
+    disposable: null,
+    promise: null,
+  };
+  pointRegistry[spec.id] = record;
+  loadMatchingExtensions(record);
+}
+
+
+/**
+ * Ensure an extension point record is fully loaded.
  *
  * It is possible for the the record to be disposed before the loader
  * promise is resolved, so the caller must validate the record state
@@ -830,7 +863,7 @@ function loadPoint(record: IPointRecord): Promise<void> {
     // Throw an error if the initializer is not a function.
     let initializer = main[spec.initializer];
     if (typeof initializer !== 'function') {
-      throw new Error(`Extension '${spec.id}' has invalid initializer.`);
+      throw new Error(`Extension point '${spec.id}' has invalid initializer.`);
     }
 
     // Load the result of the initializer.
@@ -864,8 +897,11 @@ function loadPoint(record: IPointRecord): Promise<void> {
 
   }).catch(err => {
 
-    // Log any errors which occur and then dispose the record.
+    // If an error occurs while loading, log it to the console.
+    console.error(`Error occured while loading extension point '${spec.id}'.`);
     console.error(err);
+
+    // Dispose and unregister the record.
     record.state = RecordState.Disposed;
     delete pointRegistry[spec.id];
     safeDispose(record.disposable);
@@ -927,6 +963,42 @@ function disposePoint(id: string): void {
 //-----------------------------------------------------------------------------
 // Extension Point Matching
 //-----------------------------------------------------------------------------
+
+/**
+ * Load all matching extensions for the given point record.
+ */
+function loadMatchingExtensions(pRecord: IPointRecord): void {
+  for (let key in extensionRegistry) {
+    let eRecord = extensionRegistry[key];
+    if (eRecord.spec.point === pRecord.spec.id) {
+      loadMatch(pRecord, eRecord);
+    }
+  }
+}
+
+
+/**
+ * Load the matching extension point for the given extension record.
+ */
+function loadMatchingPoint(eRecord: IExtensionRecord): void {
+  let pRecord = pointRegistry[eRecord.spec.point];
+  if (pRecord) loadMatch(pRecord, eRecord);
+}
+
+
+/**
+ * Load and connect the matching point and extension records.
+ */
+function loadMatch(pRecord: IPointRecord, eRecord: IExtensionRecord): void {
+  let p1 = loadPoint(pRecord);
+  let p2 = loadExtension(eRecord);
+  Promise.all([p1, p2]).then(() => {
+    let s1 = pRecord.state === RecordState.Loaded;
+    let s2 = eRecord.state === RecordState.Loaded;
+    if (s1 && s2) pRecord.value.add(eRecord.value);
+  });
+}
+
 
 //-----------------------------------------------------------------------------
 // Plugin Implementation

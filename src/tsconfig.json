@@ -12,9 +12,6 @@
   "files": [
     "../typings/es6-promise.d.ts",
     "../typings/systemjs.d.ts",
-    "extension.ts",
-    "index.ts",
-    "point.ts",
-    "registry.ts"
+    "index.ts"
   ]
 }

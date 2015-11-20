@@ -24,6 +24,7 @@
     "build:src": "tsc --project src",
     "build": "npm run build:src",
     "build:example": "mkdirp example/phosphor-plugins && node scripts/copyjs.js",
+    "docs": "rimraf docs/api && typedoc --options scripts/tdoptions.json",
     "prepublish": "npm run build",
     "postinstall": "npm dedupe"
   },

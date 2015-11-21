@@ -8,7 +8,7 @@
 'use strict';
 
 import {
-  IDisposable
+  DisposableDelegate, IDisposable
 } from 'phosphor-disposable';
 
 
@@ -83,9 +83,9 @@ interface IExtensionPoint extends IDisposable {
 
 
 /**
- * List the names of the currently loaded plugins.
+ * List the names of the currently registered plugins.
  *
- * @returns A new array of the currently loaded plugins.
+ * @returns A new array of the current plugin names.
  */
 export
 function listPlugins(): string[] {
@@ -116,20 +116,37 @@ function listExtensionPoints(): string[] {
 
 
 /**
+ * Register a plugin and load its configuration JSON.
  *
+ * @param name - The name of the plugin to register.
+ *
+ * @returns A disposable which will unload the plugin.
+ *
+ * @throws An error if the plugin name is already registered.
  */
 export
-function loadPlugin(name: string): void {
+function registerPlugin(name: string): IDisposable {
+  // Throw an error if the plugin name is registered.
+  if (name in pluginRegistry) {
+    throw new Error(`Plugin '${name}' is already registered.`);
+  }
 
-}
+  // Create a new unloaded record for the plugin.
+  let record: IPluginRecord = {
+    state: RecordState.Unloaded,
+    name: name,
+    spec: null,
+    promise: null,
+  };
 
+  // Add the record to the plugin registry.
+  pluginRegistry[name] = record;
 
-/**
- *
- */
-export
-function unloadPlugin(name: string): void {
+  // Load the plugin record.
+  loadPlugin(record);
 
+  // Return a disposable which will unload the plugin.
+  return new DisposableDelegate(() => { disposePlugin(name); });
 }
 
 
@@ -145,11 +162,41 @@ function unloadPlugin(name: string): void {
  * #### Notes
  * This function can be used to dynamically register an extension which
  * is created at runtime. Most extensions are registered automatically
- * as part of loading the plugin to which they belong.
+ * as part of registering their owner plugin.
  */
 export
 function registerExtension(extension: IExtension): IDisposable {
-  return null;
+  // Throw an error if the extension id is registered.
+  if (extension.id in extensionRegistry) {
+    throw new Error(`Extension '${extension.id}' is already registered.`);
+  }
+
+  // Create a compatible spec for the extension.
+  let spec: IExtensionSpec = {
+    id: extension.id,
+    point: extension.point,
+    main: '',
+    factory: '',
+    data: '',
+    config: null,
+  };
+
+  // Create a new loaded record for the extension.
+  let record: IExtensionRecord = {
+    state: RecordState.Loaded,
+    spec: spec,
+    value: extension,
+    promise: null,
+  };
+
+  // Add the record to the extension registry.
+  extensionRegistry[extension.id] = record;
+
+  // Load any matching extension point.
+  loadMatchingPoint(record);
+
+  // Return a disposable which will unload the extension.
+  return new DisposableDelegate(() => { disposeExtension(spec.id); });
 }
 
 
@@ -165,11 +212,38 @@ function registerExtension(extension: IExtension): IDisposable {
  * #### Notes
  * This function can be used to dynamically register an extension point
  * which is created at runtime. Most extension points are registered
- * automatically as part of loading the plugin to which they belong.
+ * automatically as part of registering their owner plugin.
  */
 export
 function registerExtensionPoint(point: IExtensionPoint): IDisposable {
-  return null;
+  // Throw an error if the extension point id is registered.
+  if (point.id in pointRegistry) {
+    throw new Error(`Extension point '${point.id}' is already registered.`);
+  }
+
+  // Create a compatible spec for the extension point.
+  let spec: IPointSpec = {
+    id: point.id,
+    main: '',
+    factory: '',
+  };
+
+  // Create a new loaded record for the extension.
+  let record: IPointRecord = {
+    state: RecordState.Loaded,
+    spec: spec,
+    value: point,
+    promise: null,
+  };
+
+  // Add the record to the registry.
+  pointRegistry[point.id] = record;
+
+  // Load any matching extensions.
+  loadMatchingExtensions(record);
+
+  // Return a disposable which will unload the extension point.
+  return new DisposableDelegate(() => { disposePoint(spec.id); });
 }
 
 
@@ -232,14 +306,104 @@ function safeDispose(item: any): void {
   }
 }
 
+//-----------------------------------------------------------------------------
+// Plugin Implementation
+//-----------------------------------------------------------------------------
 
 /**
- * Safely dispose of maybe-disposables in a map.
- *
- * Errors will be caught and logged to the console.
+ * An object which provides the specification for a plugin.
  */
-function safeDisposeMap(map: StringMap<any>): void {
-  for (let key in map) safeDispose(map[key]);
+interface IPluginSpec {
+  /**
+   * The extension specs for the plugin, or `[]`.
+   */
+  extensions: IExtensionSpec[];
+
+  /**
+   * The extension point specs for the plugin, or `[]`.
+   */
+  extensionPoints: IPointSpec[];
+}
+
+
+/**
+ * A registration record for a plugin.
+ */
+interface IPluginRecord {
+  /**
+   * The life cycle state of the record.
+   */
+  state: RecordState;
+
+  /**
+   * The name of the plugin.
+   */
+  name: string;
+
+  /**
+   * The specification of the plugin, or `null` if not yet loaded.
+   */
+  spec: IPluginSpec;
+
+  /**
+   * The loader promise for the record, or `null` if not loading.
+   */
+  promise: Promise<any>;
+}
+
+
+/**
+ * A mapping of plugin name to plugin record.
+ */
+var pluginRegistry = createMap<IPluginRecord>();
+
+
+/**
+ * Ensure a plugin record is fully loaded.
+ */
+function loadPlugin(record: IPluginRecord): void {
+
+}
+
+
+/**
+ * Dispose of the plugin with the specified name.
+ */
+function disposePlugin(name: string): void {
+  // Do nothing if the name is not registered.
+  if (!(name in pluginRegistry)) {
+    return;
+  }
+
+  // Delete the registration record.
+  let record = pluginRegistry[name];
+  delete pluginRegistry[name];
+
+  // Do nothing if the record is disposed or unloaded.
+  if (record.state === RecordState.Disposed ||
+      record.state === RecordState.Unloaded) {
+    return;
+  }
+
+  // If the record is loading, mark it as disposed. The loader
+  // will check for this condition and handle it on completion.
+  if (record.state === RecordState.Loading) {
+    record.state = RecordState.Disposed;
+    return;
+  }
+
+  // Mark the plugin as disposed.
+  record.state = RecordState.Disposed;
+
+  // Dispose the plugin extensions.
+  for (let ext of record.spec.extensions) {
+    disposeExtension(ext.id);
+  }
+
+  // Dispose the plugin extension points.
+  for (let point of record.spec.extensionPoints) {
+    disposePoint(point.id);
+  }
 }
 
 
@@ -295,11 +459,10 @@ class Extension implements IExtension {
       return;
     }
     this._disposed = true;
-    let item = this._item;
+    safeDispose(this._item);
     this._item = null;
     this._data = null;
     this._config = null;
-    safeDispose(item);
   }
 
   /**
@@ -368,29 +531,24 @@ interface IExtensionSpec {
   point: string;
 
   /**
-   * The path to the main module for the extension.
+   * The full path to the main module for the extension, or `''`.
    */
-  main?: string;
+  main: string;
 
   /**
-   * The name of the initializer function for the extension.
+   * The name of the factory function for the extension, or `''`.
    */
-  initializer?: string;
+  factory: string;
 
   /**
-   * The name of the loader function for the extension.
+   * The path to the JSON data file for the extension, or `''`.
    */
-  loader?: string;
+  data: string;
 
   /**
-   * The path to the JSON data file for the extension.
+   * Extra static configuration data for the extension, or `null`.
    */
-  data?: string;
-
-  /**
-   * Extra static configuration data for the extension.
-   */
-  config?: any;
+  config: any;
 }
 
 
@@ -409,21 +567,12 @@ interface IExtensionRecord {
   spec: IExtensionSpec;
 
   /**
-   * The actual extension object.
-   *
-   * This will be `null` until the record is fully loaded.
+   * The loaded extension object, or `null` if not yet loaded.
    */
   value: IExtension;
 
   /**
-   * A maybe-disposable to invoke after disposing the extension.
-   */
-  disposable: any;
-
-  /**
-   * The loader promise for the record.
-   *
-   * This will be `null` unless the record is loading.
+   * The loader promise for the record, or `null` if not loading.
    */
   promise: Promise<void>;
 }
@@ -436,41 +585,21 @@ var extensionRegistry = createMap<IExtensionRecord>();
 
 
 /**
- * Register an extension spec and connect the matching extension point.
- *
- * This will throw an error if the extension id is already registered.
- */
-function registerExtensionSpec(spec: IExtensionSpec): void {
-  if (spec.id in extensionRegistry) {
-    throw new Error(`Extension '${spec.id}' is already registered.`);
-  }
-  let record: IExtensionRecord = {
-    state: RecordState.Unloaded,
-    spec: spec,
-    value: null,
-    disposable: null,
-    promise: null,
-  };
-  extensionRegistry[spec.id] = record;
-  loadMatchingPoint(record);
-}
-
-
-/**
  * Ensure an extension record is fully loaded.
  *
+ * @param record - The extension record of interest.
+ *
+ * @returns A promise which resolves when loading is complete.
+ *
+ * #### Notes
  * It is possible for the the record to be disposed before the loader
  * promise is resolved, so the caller must validate the record state
  * after resolving the returned promise.
  */
 function loadExtension(record: IExtensionRecord): Promise<void> {
-  // If the record is disposed, there is nothing to do.
-  if (record.state === RecordState.Disposed) {
-    return Promise.resolve<void>();
-  }
-
-  // If the record is fully loaded, there is nothing to do.
-  if (record.state === RecordState.Loaded) {
+  // If the record is disposed or loaded, there is nothing to do.
+  if (record.state === RecordState.Disposed ||
+      record.state === RecordState.Loaded) {
     return Promise.resolve<void>();
   }
 
@@ -492,58 +621,40 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
 
   }).then(argdata => {
 
-    // Store the loaded JSON data for future use in the chain.
+    // Store the data for later use.
     data = argdata;
 
-    // Load the main extension module, if given.
+    // Load the main module, if given.
     return spec.main ? System.import(spec.main) : null;
 
   }).then(argmain => {
 
-    // Store the loaded main module for future use in the chain.
+    // Store the main module for later use.
     main = argmain;
 
-    // If there is no initializer function, skip to the next step.
-    if (!main || !spec.initializer) {
+    // If there is no factory, skip to the next step.
+    if (!main || !spec.factory) {
       return null;
     }
 
-    // Throw an error if the initializer is not a function.
-    let initializer = main[spec.initializer];
-    if (typeof initializer !== 'function') {
-      throw new Error(`Extension '${spec.id}' has invalid initializer.`);
+    // Throw an error if the factory is not a function.
+    let factory = main[spec.factory];
+    if (typeof factory !== 'function') {
+      throw new Error(`Extension '${spec.id}' has invalid factory.`);
     }
 
-    // Load the result of the initializer.
-    return initializer();
-
-  }).then(disposable => {
-
-    // Update the main disposable for the record.
-    record.disposable = disposable;
-
-    // If there is no loader function, skip to the next step.
-    if (!main || !spec.loader) {
-      return null;
-    }
-
-    // Throw an error if the loader is not a function.
-    let loader = main[spec.loader];
-    if (typeof loader !== 'function') {
-      throw new Error(`Extension '${spec.id}' has invalid loader.`);
-    }
-
-    // Load the actual item for the extension.
-    return loader();
+    // Load the result of the factory.
+    return factory();
 
   }).then(item => {
 
+    // Clear the loader promise.
+    record.promise = null;
+
     // If the record was disposed before reaching this point, release
-    // the item and disposable. Otherwise, create the extension object
-    // and update the record state.
+    // the item. Otherwise, create the extension and update the record.
     if (record.state === RecordState.Disposed) {
       safeDispose(item);
-      safeDispose(record.disposable);
     } else {
       record.value = Extension.create(spec, item, data);
       record.state = RecordState.Loaded;
@@ -555,17 +666,12 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
     console.error(`Error occured while loading extension '${spec.id}'.`);
     console.error(err);
 
-    // Dispose and unregister the record.
-    record.state = RecordState.Disposed;
-    delete extensionRegistry[spec.id];
-    safeDispose(record.disposable);
-
-  }).then(() => {
-
-    // Finally, clear the promise and local variable state.
+    // Clear the loader promise.
     record.promise = null;
-    data = null;
-    main = null;
+
+    // Unregister the extension and mark it as disposed.
+    delete extensionRegistry[spec.id];
+    record.state = RecordState.Disposed;
 
   });
 
@@ -591,13 +697,9 @@ function disposeExtension(id: string): void {
   let record = extensionRegistry[id];
   delete extensionRegistry[id];
 
-  // Do nothing if the record is disposed.
-  if (record.state === RecordState.Disposed) {
-    return;
-  }
-
-  // Do nothing if the record is unloaded.
-  if (record.state === RecordState.Unloaded) {
+  // Do nothing if the record is disposed or unloaded.
+  if (record.state === RecordState.Disposed ||
+      record.state === RecordState.Unloaded) {
     return;
   }
 
@@ -608,14 +710,13 @@ function disposeExtension(id: string): void {
     return;
   }
 
-  // Remove the extension from the matching extension point, if any.
+  // Remove the extension from any matching extension point.
   let other = pointRegistry[record.spec.point];
   if (other && other.value) other.value.remove(id);
 
   // Dispose of the extension.
   record.state = RecordState.Disposed;
   record.value.dispose();
-  safeDispose(record.disposable);
 }
 
 
@@ -624,9 +725,38 @@ function disposeExtension(id: string): void {
 //-----------------------------------------------------------------------------
 
 /**
- * A type alias for an extension point receiver function.
+ * A receiver object for an extension point.
  */
-type Receiver = (extension: IExtension) => any;
+interface IReceiver {
+  /**
+   * Add an extension to the extension point.
+   *
+   * @param extension - The extension to add to the point.
+   *
+   * #### Notes
+   * This should be a no-op if the extension has already been added.
+   */
+  add(extension: IExtension): void;
+
+  /**
+   * Remove an extension from the extension point.
+   *
+   * @param id - The id of the extension to remove.
+   *
+   * #### Notes
+   * This should be a no-op if the extension has not been added.
+   */
+  remove(id: string): void;
+}
+
+
+/**
+ * Test whether an object implements `IReceiver`.
+ */
+function isReceiver(item: any): boolean {
+  if (!item) return false;
+  return typeof item.add === 'function' && typeof item.remove === 'function';
+}
 
 
 /**
@@ -638,9 +768,9 @@ class ExtensionPoint implements IExtensionPoint {
    *
    * @param spec - The specification for the extension point.
    *
-   * @param receiver - The extension point receiver function.
+   * @param receiver - The receiver for the extension point.
    */
-  static create(spec: IPointSpec, receiver: Receiver): ExtensionPoint {
+  static create(spec: IPointSpec, receiver: IReceiver): ExtensionPoint {
     return new ExtensionPoint(spec.id, receiver);
   }
 
@@ -649,9 +779,9 @@ class ExtensionPoint implements IExtensionPoint {
    *
    * @param id - The globally unique id of the extension point.
    *
-   * @param receiver - The extension point receiver function.
+   * @param receiver - The receiver for the extension point.
    */
-  constructor(id: string, receiver: Receiver) {
+  constructor(id: string, receiver: IReceiver) {
     this._id = id;
     this._receiver = receiver;
   }
@@ -664,10 +794,8 @@ class ExtensionPoint implements IExtensionPoint {
       return;
     }
     this._disposed = true;
-    let map = this._map;
-    this._map = null;
+    safeDispose(this._receiver);
     this._receiver = null;
-    safeDisposeMap(map);
   }
 
   /**
@@ -686,46 +814,21 @@ class ExtensionPoint implements IExtensionPoint {
 
   /**
    * Add an extension to the extension point.
-   *
-   * @param extension - The extension to add to the point.
-   *
-   * #### Notes
-   * This is a no-op if the extension has already been added.
    */
   add(extension: IExtension): void {
-    if (this._disposed) {
-      throw new Error(`Extension point '${this._id}' is disposed.`);
-    }
-    if (extension.id in this._map) {
-      return;
-    }
-    this._map[extension.id] = this._receiver.call(void 0, extension);
+    this._receiver.add(extension);
   }
 
   /**
    * Remove an extension from the extension point.
-   *
-   * @param id - The id of the extension to remove.
-   *
-   * #### Notes
-   * This is a no-op if the extension has not been added.
    */
   remove(id: string): void {
-    if (this._disposed) {
-      throw new Error(`Extension point '${this._id}' is disposed.`);
-    }
-    if (!(id in this._map)) {
-      return;
-    }
-    let item = this._map[id];
-    delete this._map[id];
-    safeDispose(item);
+    this._receiver.remove(id);
   }
 
   private _id: string;
-  private _receiver: Receiver;
-  private _map = createMap<any>();
   private _disposed = false;
+  private _receiver: IReceiver;
 }
 
 
@@ -739,19 +842,14 @@ interface IPointSpec {
   id: string;
 
   /**
-   * The path to the main module for the extension point.
+   * The full path to the main module for the extension point.
    */
   main: string;
 
   /**
-   * The name of the receiver function for the extension point.
+   * The name of the factory function for the extension point.
    */
-  receiver: string;
-
-  /**
-   * The name of the initializer function for the extension point.
-   */
-  initializer?: string;
+  factory: string;
 }
 
 
@@ -770,21 +868,12 @@ interface IPointRecord {
   spec: IPointSpec;
 
   /**
-   * The extension point object.
-   *
-   * This will be `null` until the record is fully loaded.
+   * The loaded extension point object, or `null` if not yet loaded.
    */
   value: IExtensionPoint;
 
   /**
-   * A maybe-disposable to invoke after disposing the extension point.
-   */
-  disposable: any;
-
-  /**
-   * The loader promise for the record.
-   *
-   * This will be `null` unless the record is loading.
+   * The loader promise for the record, or `null` if not loading.
    */
   promise: Promise<void>;
 }
@@ -797,41 +886,24 @@ var pointRegistry = createMap<IPointRecord>();
 
 
 /**
- * Register a point spec and connect the matching extensions.
- *
- * This will throw an error if the point id is already registered.
- */
-function registerPointSpec(spec: IPointSpec): void {
-  if (spec.id in pointRegistry) {
-    throw new Error(`Extension point '${spec.id}' is already registered.`);
-  }
-  let record: IPointRecord = {
-    state: RecordState.Unloaded,
-    spec: spec,
-    value: null,
-    disposable: null,
-    promise: null,
-  };
-  pointRegistry[spec.id] = record;
-  loadMatchingExtensions(record);
-}
-
-
-/**
  * Ensure an extension point record is fully loaded.
+ *
+ * @param record - The point record of interest.
+ *
+ * @returns A promise which resolves when loading is complete.
+ *
+ * #### Notes
+ * If the point spec has no main module or no factory, the point must
+ * be a manually loaded extension point.
  *
  * It is possible for the the record to be disposed before the loader
  * promise is resolved, so the caller must validate the record state
  * after resolving the returned promise.
  */
 function loadPoint(record: IPointRecord): Promise<void> {
-  // If the record is disposed, there is nothing to do.
-  if (record.state === RecordState.Disposed) {
-    return Promise.resolve<void>();
-  }
-
-  // If the record is fully loaded, there is nothing to do.
-  if (record.state === RecordState.Loaded) {
+  // If the record is disposed or loaded, there is nothing to do.
+  if (record.state === RecordState.Disposed ||
+      record.state === RecordState.Loaded) {
     return Promise.resolve<void>();
   }
 
@@ -847,49 +919,37 @@ function loadPoint(record: IPointRecord): Promise<void> {
   // Kick off the promise loading chain.
   let promise = Promise.resolve().then(() => {
 
-    // Load the main extension point module.
+    // Load the main module for the extension point.
     return System.import(spec.main);
 
   }).then(argmain => {
 
-    // Store the loaded main module for future use in the chain.
+    // Store the main module for later use.
     main = argmain;
 
-    // If there is no initializer function, skip to the next step.
-    if (!spec.initializer) {
-      return null;
+    // Throw an error if the factory is not a function.
+    let factory = main[spec.factory];
+    if (typeof factory !== 'function') {
+      throw new Error(`Extension point '${spec.id}' has invalid factory.`);
     }
 
-    // Throw an error if the initializer is not a function.
-    let initializer = main[spec.initializer];
-    if (typeof initializer !== 'function') {
-      throw new Error(`Extension point '${spec.id}' has invalid initializer.`);
-    }
-
-    // Load the result of the initializer.
-    return initializer();
-
-  }).then(disposable => {
-
-    // Update the main disposable for the record.
-    record.disposable = disposable;
-
-    // Throw an error if the receiver is not a function.
-    let receiver = main[spec.receiver];
-    if (typeof receiver !== 'function') {
-      throw new Error(`Extension point '${spec.id}' has invalid receiver.`);
-    }
-
-    // Return the receiver function.
-    return receiver;
+    // Load the result of the factory.
+    return factory();
 
   }).then(receiver => {
 
+    // Throw an error if the receiver interface is invalid.
+    if (!isReceiver(receiver)) {
+      throw new Error(`Extension point '${spec.id}' has invalid receiver.`);
+    }
+
+    // Clear the loader promise.
+    record.promise = null;
+
     // If the record was disposed before reaching this point, release
-    // the disposable. Otherwise, create the extension point object
-    // and update the record state.
+    // the item. Otherwise, create the point and update the record.
     if (record.state === RecordState.Disposed) {
-      safeDispose(record.disposable);
+      safeDispose(receiver);
     } else {
       record.value = ExtensionPoint.create(spec, receiver);
       record.state = RecordState.Loaded;
@@ -901,16 +961,12 @@ function loadPoint(record: IPointRecord): Promise<void> {
     console.error(`Error occured while loading extension point '${spec.id}'.`);
     console.error(err);
 
-    // Dispose and unregister the record.
-    record.state = RecordState.Disposed;
-    delete pointRegistry[spec.id];
-    safeDispose(record.disposable);
-
-  }).then(() => {
-
-    // Finally, clear the promise and local variable state.
+    // Clear the loader promise.
     record.promise = null;
-    main = null;
+
+    // Unregister the extension point and mark it as disposed.
+    delete pointRegistry[spec.id];
+    record.state = RecordState.Disposed;
 
   });
 
@@ -936,13 +992,9 @@ function disposePoint(id: string): void {
   let record = pointRegistry[id];
   delete pointRegistry[id];
 
-  // Do nothing if the record is disposed.
-  if (record.state === RecordState.Disposed) {
-    return;
-  }
-
-  // Do nothing if the record is unloaded.
-  if (record.state === RecordState.Unloaded) {
+  // Do nothing if the record is disposed or unloaded.
+  if (record.state === RecordState.Disposed ||
+      record.state === RecordState.Unloaded) {
     return;
   }
 
@@ -956,7 +1008,6 @@ function disposePoint(id: string): void {
   // Dispose of the extension point.
   record.state = RecordState.Disposed;
   record.value.dispose();
-  safeDispose(record.disposable);
 }
 
 
@@ -998,13 +1049,3 @@ function loadMatch(pRecord: IPointRecord, eRecord: IExtensionRecord): void {
     if (s1 && s2) pRecord.value.add(eRecord.value);
   });
 }
-
-
-//-----------------------------------------------------------------------------
-// Plugin Implementation
-//-----------------------------------------------------------------------------
-
-/**
- * A mapping of plugin name to plugin spec.
- */
-var pluginRegistry = createMap<any>();

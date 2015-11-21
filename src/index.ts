@@ -189,7 +189,7 @@ function registerExtension(extension: IExtension): IDisposable {
   };
 
   // Add the record to the extension registry.
-  extensionRegistry[extension.id] = record;
+  extensionRegistry[spec.id] = record;
 
   // Load any matching extension point.
   loadMatchingPoint(record);
@@ -236,7 +236,7 @@ function registerExtensionPoint(point: IExtensionPoint): IDisposable {
   };
 
   // Add the record to the registry.
-  pointRegistry[point.id] = record;
+  pointRegistry[spec.id] = record;
 
   // Load any matching extensions.
   loadMatchingExtensions(record);

@@ -136,7 +136,6 @@ function registerPlugin(name: string): IDisposable {
     state: RecordState.Unloaded,
     name: name,
     spec: null,
-    promise: null,
   };
 
   // Add the record to the plugin registry.
@@ -344,11 +343,6 @@ interface IPluginRecord {
    * The specification of the plugin, or `null` if not yet loaded.
    */
   spec: IPluginSpec;
-
-  /**
-   * The loader promise for the record, or `null` if not loading.
-   */
-  promise: Promise<any>;
 }
 
 

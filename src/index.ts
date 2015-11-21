@@ -116,13 +116,19 @@ function listExtensionPoints(): string[] {
 
 
 /**
- * Register a plugin and load its configuration JSON.
+ * Register a plugin and load its JSON specification.
  *
  * @param name - The name of the plugin to register.
  *
  * @returns A disposable which will unload the plugin.
  *
  * @throws An error if the plugin name is already registered.
+ *
+ * #### Notes
+ * A plugin name is the same as the name of the package which contains
+ * the plugin specification. For a plugin named `my-plugin`, this will
+ * load the `my-plugin/package.json` file. The `phosphor-plugin` field
+ * in that file will be used to configure the plugin.
  */
 export
 function registerPlugin(name: string): IDisposable {
@@ -299,6 +305,24 @@ function safeDispose(item: any): void {
   }
 }
 
+
+/**
+ * Test whether loaded JSON data is an object.
+ */
+function isObject(jsonData: any): boolean {
+  if (!jsonData) {
+    return false;
+  }
+  if (typeof jsonData !== 'object') {
+    return false;
+  }
+  if (jsonData instanceof Array) {
+    return false;
+  }
+  return true;
+}
+
+
 //-----------------------------------------------------------------------------
 // Plugin Implementation
 //-----------------------------------------------------------------------------
@@ -355,7 +379,62 @@ var pluginRegistry = createMap<IPluginRecord>();
  * Ensure a plugin record is fully loaded.
  */
 function loadPlugin(record: IPluginRecord): void {
+  // If the record is not unloaded, there is nothing to do.
+  if (record.state !== RecordState.Unloaded) {
+    return;
+  }
 
+  // Set the record state to loading.
+  record.state = RecordState.Loading;
+
+  // Kick off the promise loading chain.
+  Promise.resolve().then(() => {
+
+    // Load the plugin package JSON.
+    return System.import(`${record.name}/package.json`);
+
+  }).then(pkg => {
+
+    // Do nothing if the record has been disposed.
+    if (record.state === RecordState.Disposed) {
+      return;
+    }
+
+    // Assert the package JSON data is an object.
+    if (!isObject(pkg)) {
+      throw new Error('`package.json` must be an object.');
+    }
+
+    // Assert the plugin JSON data exists.
+    if (!('phosphor-plugin' in pkg)) {
+      throw new Error('`phosphor-plugin` is not specified.');
+    }
+
+    // Create the plugin spec from the plugin JSON data.
+    record.spec = createPluginSpec(record.name, pkg['phosphor-plugin']);
+    record.state = RecordState.Loaded;
+
+    // Register the plugin extension points.
+    for (let point of record.spec.extensionPoints) {
+      registerPointSpec(point);
+    }
+
+    // Register the plugin extensions.
+    for (let ext of record.spec.extensions) {
+      registerExtensionSpec(ext);
+    }
+
+  }).catch(err => {
+
+    // If an error occurs while loading, log it to the console.
+    console.error(`Error occured while loading plugin '${record.name}'.`);
+    console.error(err);
+
+    // Unregister the plugin and mark it as disposed.
+    delete pluginRegistry[record.name];
+    record.state = RecordState.Disposed;
+
+  });
 }
 
 
@@ -396,6 +475,130 @@ function disposePlugin(name: string): void {
   // Dispose the plugin extension points.
   for (let point of record.spec.extensionPoints) {
     disposePoint(point.id);
+  }
+}
+
+
+/**
+ * Create a plugin spec from plugin JSON data.
+ *
+ * This will throw error if any part of the data is invalid.
+ */
+function createPluginSpec(name: string, plugin: any): IPluginSpec {
+  // Assert the plugin is an object.
+  if (!isObject(plugin)) {
+    throw new Error('Plugin must be an object.');
+  }
+
+  // Create the extension specs for the plugin.
+  let extensions = createExtensionSpecs();
+
+  // Create the point specs for the plugin.
+  let extensionPoints = createPointSpecs();
+
+  // Return the new plugin spec.
+  return { name, extensions, extensionPoints };
+
+  // Create the array of extension specs.
+  function createExtensionSpecs(): IExtensionSpec[] {
+    if (!('extensions' in plugin)) {
+      return [];
+    }
+
+    if (!(plugin.extensions instanceof Array)) {
+      throw new Error('`extensions` must be an array.');
+    }
+
+    return plugin.extensions.map(createExtensionSpec);
+  }
+
+  // Create the array of extension point specs.
+  function createPointSpecs(): IPointSpec[] {
+    if (!('extensionPoints' in plugin)) {
+      return [];
+    }
+
+    if (!(plugin.extensionPoints instanceof Array)) {
+      throw new Error('`extensionPoints` must be an array.');
+    }
+
+    return plugin.extensionPoints.map(createPointSpec);
+  }
+
+  // Create an extension spec from extension JSON data.
+  function createExtensionSpec(ext: any): IExtensionSpec {
+    if (!isObject(ext)) {
+      throw new Error('Extension must be an object.');
+    }
+
+    if (typeof ext.id !== 'string') {
+      throw new Error('Extension `id` must be a string.');
+    }
+
+    if (typeof ext.point !== 'string') {
+      throw new Error('Extension `point` must be a string.');
+    }
+
+    let spec: IExtensionSpec = { id: ext.id, point: ext.point, plugin: name };
+
+    if ('main' in ext) {
+      if (typeof ext.main !== 'string') {
+        throw new Error('Extension `main` must be a string.');
+      }
+      spec.main = ext.main;
+    }
+
+    if ('factory' in ext) {
+      if (typeof ext.factory !== 'string') {
+        throw new Error('Extension `factory` must be a string.');
+      }
+      spec.factory = ext.factory;
+    }
+
+    if ('data' in ext) {
+      if (typeof ext.data !== 'string') {
+        throw new Error('Extension `data` must be a string.');
+      }
+      spec.data = ext.data;
+    }
+
+    if ('config' in ext) {
+      if (!isObject(ext.config)) {
+        throw new Error('Extension `config` must be an object.');
+      }
+      spec.config = ext.config;
+    }
+
+    return spec;
+  }
+
+  // Create a point spec from point JSON data.
+  function createPointSpec(point: any): IPointSpec {
+    if (!isObject(point)) {
+      throw new Error('Extension point must be an object.');
+    }
+
+    if (typeof point.id !== 'string') {
+      throw new Error('Extension point `id` must be a string.');
+    }
+
+    let spec: IPointSpec = { id: point.id, plugin: name };
+
+    if ('main' in point) {
+      if (typeof point.main !== 'string') {
+        throw new Error('Extension point `main` must be a string.');
+      }
+      spec.main = point.main;
+    }
+
+    if ('factory' in point) {
+      if (typeof point.factory !== 'string') {
+        throw new Error('Extension point `factory` must be a string.');
+      }
+      spec.factory = point.factory;
+    }
+
+    return spec;
   }
 }
 
@@ -584,13 +787,37 @@ var extensionRegistry = createMap<IExtensionRecord>();
 
 
 /**
+ * Register an extension spec and load the matching extension point.
+ *
+ * If the extension id is already registered, an error will be logged
+ * and the registration will be ignored.
+ */
+function registerExtensionSpec(spec: IExtensionSpec): void {
+  // Log an error if the extension id is already registered.
+  if (spec.id in extensionRegistry) {
+    console.error(`Extension '${spec.id}' is already registered.`);
+    return;
+  }
+
+  // Create a new unloaded record for the extension.
+  let record: IExtensionRecord = {
+    state: RecordState.Unloaded,
+    spec: spec,
+    value: null,
+    promise: null,
+  };
+
+  // Add the record to the extension registry.
+  extensionRegistry[spec.id] = record;
+
+  // Load the matching extension point.
+  loadMatchingPoint(record);
+}
+
+
+/**
  * Ensure an extension record is fully loaded.
  *
- * @param record - The extension record of interest.
- *
- * @returns A promise which resolves when loading is complete.
- *
- * #### Notes
  * It is possible for the the record to be disposed before the loader
  * promise is resolved, so the caller must validate the record state
  * after resolving the returned promise.
@@ -888,15 +1115,36 @@ var pointRegistry = createMap<IPointRecord>();
 
 
 /**
+ * Register an extension point spec and load any matching extensions.
+ *
+ * If the point id is already registered, an error will be logged
+ * and the registration will be ignored.
+ */
+function registerPointSpec(spec: IPointSpec): void {
+  // Log an error if the extension point id is already registered.
+  if (spec.id in pointRegistry) {
+    console.error(`Extension point '${spec.id}' is already registered.`);
+    return;
+  }
+
+  // Create a new unloaded record for the point.
+  let record: IPointRecord = {
+    state: RecordState.Unloaded,
+    spec: spec,
+    value: null,
+    promise: null,
+  };
+
+  // Add the record to the point registry.
+  pointRegistry[spec.id] = record;
+
+  // Load any matching extensions.
+  loadMatchingExtensions(record);
+}
+
+
+/**
  * Ensure an extension point record is fully loaded.
- *
- * @param record - The point record of interest.
- *
- * @returns A promise which resolves when loading is complete.
- *
- * #### Notes
- * If the point spec has no main module or no factory, the point must
- * be a manually loaded extension point.
  *
  * It is possible for the the record to be disposed before the loader
  * promise is resolved, so the caller must validate the record state

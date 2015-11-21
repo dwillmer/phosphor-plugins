@@ -150,7 +150,7 @@ function registerPlugin(name: string): IDisposable {
 
 
 /**
- * Register an extension and connect it to a matching extension point.
+ * Register an extension and connect the matching extension point.
  *
  * @param extension - The extension object to register.
  *
@@ -174,10 +174,6 @@ function registerExtension(extension: IExtension): IDisposable {
   let spec: IExtensionSpec = {
     id: extension.id,
     point: extension.point,
-    main: '',
-    factory: '',
-    data: '',
-    config: null,
   };
 
   // Create a new loaded record for the extension.
@@ -200,7 +196,7 @@ function registerExtension(extension: IExtension): IDisposable {
 
 
 /**
- * Register an extension point and connect its matching extensions.
+ * Register an extension point and connect the matching extensions.
  *
  * @param point - The extension point object to register.
  *
@@ -223,8 +219,6 @@ function registerExtensionPoint(point: IExtensionPoint): IDisposable {
   // Create a compatible spec for the extension point.
   let spec: IPointSpec = {
     id: point.id,
-    main: '',
-    factory: '',
   };
 
   // Create a new loaded record for the extension.
@@ -314,12 +308,17 @@ function safeDispose(item: any): void {
  */
 interface IPluginSpec {
   /**
-   * The extension specs for the plugin, or `[]`.
+   * The name of the plugin.
+   */
+  name: string;
+
+  /**
+   * The extension specs for the plugin.
    */
   extensions: IExtensionSpec[];
 
   /**
-   * The extension point specs for the plugin, or `[]`.
+   * The extension point specs for the plugin.
    */
   extensionPoints: IPointSpec[];
 }
@@ -453,10 +452,11 @@ class Extension implements IExtension {
       return;
     }
     this._disposed = true;
-    safeDispose(this._item);
+    let temp = this._item;
     this._item = null;
     this._data = null;
     this._config = null;
+    safeDispose(temp);
   }
 
   /**
@@ -525,24 +525,29 @@ interface IExtensionSpec {
   point: string;
 
   /**
-   * The full path to the main module for the extension, or `''`.
+   * The name of the plugin which owns the extension.
    */
-  main: string;
+  plugin?: string;
 
   /**
-   * The name of the factory function for the extension, or `''`.
+   * The relative path to the extension main module.
    */
-  factory: string;
+  main?: string;
 
   /**
-   * The path to the JSON data file for the extension, or `''`.
+   * The name of the factory function for the extension.
    */
-  data: string;
+  factory?: string;
 
   /**
-   * Extra static configuration data for the extension, or `null`.
+   * The path to the JSON data file for the extension.
    */
-  config: any;
+  data?: string;
+
+  /**
+   * Extra static configuration data for the extension.
+   */
+  config?: any;
 }
 
 
@@ -602,29 +607,27 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
     return record.promise;
   }
 
-  // Setup local variables for loading the extension.
+  // Setup local variables.
   let spec = record.spec;
   let data: any = null;
-  let main: any = null;
 
   // Kick off the promise loading chain.
   let promise = Promise.resolve().then(() => {
 
-    // Load the extension JSON data, if given.
-    return spec.data ? System.import(spec.data) : null;
+    // Load the extension JSON data, if given. Extensions which
+    // are manually registered will always have a null data file.
+    return spec.data ? System.import(`${spec.plugin}/${spec.data}`) : null;
 
   }).then(argdata => {
 
     // Store the data for later use.
     data = argdata;
 
-    // Load the main module, if given.
-    return spec.main ? System.import(spec.main) : null;
+    // Load the main module for the extension. Extensions which
+    // are manually registered will always have a null main module.
+    return spec.main ? System.import(`${spec.plugin}/${spec.main}`) : null;
 
-  }).then(argmain => {
-
-    // Store the main module for later use.
-    main = argmain;
+  }).then(main => {
 
     // If there is no factory, skip to the next step.
     if (!main || !spec.factory) {
@@ -748,7 +751,6 @@ interface IReceiver {
  * Test whether an object implements `IReceiver`.
  */
 function isReceiver(item: any): boolean {
-  if (!item) return false;
   return typeof item.add === 'function' && typeof item.remove === 'function';
 }
 
@@ -762,7 +764,7 @@ class ExtensionPoint implements IExtensionPoint {
    *
    * @param spec - The specification for the extension point.
    *
-   * @param receiver - The receiver for the extension point.
+   * @param receiver - The receiver for the extension point, or `null`.
    */
   static create(spec: IPointSpec, receiver: IReceiver): ExtensionPoint {
     return new ExtensionPoint(spec.id, receiver);
@@ -773,11 +775,11 @@ class ExtensionPoint implements IExtensionPoint {
    *
    * @param id - The globally unique id of the extension point.
    *
-   * @param receiver - The receiver for the extension point.
+   * @param receiver - The receiver for the extension point, or `null`.
    */
   constructor(id: string, receiver: IReceiver) {
     this._id = id;
-    this._receiver = receiver;
+    this._receiver = receiver || null;
   }
 
   /**
@@ -788,8 +790,9 @@ class ExtensionPoint implements IExtensionPoint {
       return;
     }
     this._disposed = true;
-    safeDispose(this._receiver);
+    let temp = this._receiver;
     this._receiver = null;
+    safeDispose(temp);
   }
 
   /**
@@ -810,14 +813,14 @@ class ExtensionPoint implements IExtensionPoint {
    * Add an extension to the extension point.
    */
   add(extension: IExtension): void {
-    this._receiver.add(extension);
+    if (this._receiver) this._receiver.add(extension);
   }
 
   /**
    * Remove an extension from the extension point.
    */
   remove(id: string): void {
-    this._receiver.remove(id);
+    if (this._receiver) this._receiver.remove(id);
   }
 
   private _id: string;
@@ -836,14 +839,19 @@ interface IPointSpec {
   id: string;
 
   /**
-   * The full path to the main module for the extension point.
+   * The name of the plugin which owns the point.
    */
-  main: string;
+  plugin?: string;
+
+  /**
+   * The relative path to the extension point main module.
+   */
+  main?: string;
 
   /**
    * The name of the factory function for the extension point.
    */
-  factory: string;
+  factory?: string;
 }
 
 
@@ -906,20 +914,22 @@ function loadPoint(record: IPointRecord): Promise<void> {
     return record.promise;
   }
 
-  // Setup local variables for loading the extension point.
+  // Setup local variables.
   let spec = record.spec;
-  let main: any = null;
 
-  // Kick off the promise loading chain.
+  // Kick off the loader promise chain.
   let promise = Promise.resolve().then(() => {
 
-    // Load the main module for the extension point.
-    return System.import(spec.main);
+    // Load the main module for the extension point. Points which
+    // are manually registered will always have a null main module.
+    return spec.main ? System.import(`${spec.plugin}/${spec.main}`) : null;
 
-  }).then(argmain => {
+  }).then(main => {
 
-    // Store the main module for later use.
-    main = argmain;
+    // If there is no factory, skip to the next step.
+    if (!main || !spec.factory) {
+      return null;
+    }
 
     // Throw an error if the factory is not a function.
     let factory = main[spec.factory];
@@ -933,7 +943,7 @@ function loadPoint(record: IPointRecord): Promise<void> {
   }).then(receiver => {
 
     // Throw an error if the receiver interface is invalid.
-    if (!isReceiver(receiver)) {
+    if (receiver && !isReceiver(receiver)) {
       throw new Error(`Extension point '${spec.id}' has invalid receiver.`);
     }
 
@@ -941,7 +951,7 @@ function loadPoint(record: IPointRecord): Promise<void> {
     record.promise = null;
 
     // If the record was disposed before reaching this point, release
-    // the item. Otherwise, create the point and update the record.
+    // the receiver. Otherwise, create the point and update the record.
     if (record.state === RecordState.Disposed) {
       safeDispose(receiver);
     } else {

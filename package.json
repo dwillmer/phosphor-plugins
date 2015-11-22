@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "dependencies": {
-    "phosphor-disposable": "^1.0.4"
+    "phosphor-disposable": "^1.0.5"
   },
   "devDependencies": {
     "coveralls": "^2.11.4",
@@ -15,15 +15,16 @@
     "mkdirp": "^0.5.1",
     "mocha": "^2.2.5",
     "rimraf": "^2.4.2",
-    "steal": "^0.12.1",
     "typedoc": "^0.3.11",
     "typescript": "^1.6.2"
   },
   "scripts": {
     "clean": "rimraf lib",
+    "clean:example": "rimraf example/phosphor-plugins && rimraf example/node_modules",
     "build:src": "tsc --project src",
     "build": "npm run build:src",
-    "build:example": "mkdirp example/phosphor-plugins && node scripts/copyjs.js",
+    "build:example": "mkdirp example/phosphor-plugins && node scripts/copyjs.js && cd example && npm install",
+    "docs": "rimraf docs/api && typedoc --options scripts/tdoptions.json",
     "prepublish": "npm run build",
     "postinstall": "npm dedupe"
   },
@@ -37,10 +38,14 @@
   ],
   "keywords": [
     "application",
+    "extension",
+    "extensions",
     "plugin",
-    "plugins"
+    "plugins",
+    "point",
+    "points"
   ],
-  "author": "Steven Silvester <steven.silvester@gmail.com>",
+  "author": "S. Chris Colbert <sccolbert@gmail.com>",
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/phophorjs/phosphor-plugins/issues"

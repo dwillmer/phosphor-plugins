@@ -10,11 +10,8 @@
     "outDir": "../lib"
   },
   "files": [
-      "../typings/es6-collections.d.ts",
-      "../typings/es6-promise.d.ts",
-      "../typings/systemjs.d.ts",
-      "index.ts",
-      "plugin.ts",
-      "extension.ts"
-    ]
+    "../typings/es6-promise/es6-promise.d.ts",
+    "../typings/systemjs/systemjs.d.ts",
+    "index.ts"
+  ]
 }

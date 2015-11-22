@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {},
+  "phosphor-plugin": {
+    "extensionPoints": [
+      {
+        "main": "index.js",
+        "id": "my-foo:foo-point",
+        "factory": "createFooReceiver"
+      }
+    ]
+  }
+}

@@ -83,6 +83,71 @@ interface IExtensionPoint extends IDisposable {
 
 
 /**
+ * An object which represents a contribution to an extension point.
+ *
+ * Objects of this type are created by an extension factory function
+ * to provide a behavioral object to a matching extension point.
+ *
+ * This type is not used for manually registered extensions.
+ */
+export
+interface IContrib {
+  /**
+   * The behavioral object to provide to the extension point.
+   */
+  item: any;
+
+  /**
+   * Dispose of the resources held by the extension.
+   *
+   * If this method is provided, it will be invoked when the plugin
+   * which registered the extension is unloaded.
+   */
+  dispose?(): void;
+}
+
+
+/**
+ * A receiver object for an extension point.
+ *
+ * Objects of this type are created by an extension point factory
+ * function to handle addition and removal of matching extensions.
+ *
+ * This type is not used for manually registered extension points.
+ */
+export
+interface IReceiver {
+  /**
+   * Add an extension to the extension point.
+   *
+   * @param extension - The extension to add to the point.
+   *
+   * #### Notes
+   * This should be a no-op if the extension has already been added.
+   */
+  add(extension: IExtension): void;
+
+  /**
+   * Remove an extension from the extension point.
+   *
+   * @param id - The id of the extension to remove.
+   *
+   * #### Notes
+   * This should be a no-op if the extension has not been added.
+   */
+  remove(id: string): void;
+
+  /**
+   * Dispose of the resources held by the receiver.
+   *
+   * If this method is provided, it will be invoked when the plugin
+   * which registered the extension point is unloaded.
+   */
+  dispose?(): void;
+}
+
+
+/**
  * List the names of the currently registered plugins.
  *
  * @returns A new array of the current plugin names.
@@ -295,10 +360,10 @@ function createMap<T>(): StringMap<T> {
  *
  * All errors will be caught and logged to the console.
  */
-function safeDispose(item: any): void {
-  if (item && typeof item.dispose === 'function') {
+function safeDispose(obj: any): void {
+  if (obj && typeof obj.dispose === 'function') {
     try {
-      item.dispose();
+      obj.dispose();
     } catch (err) {
       console.error(err);
     }
@@ -320,6 +385,22 @@ function isObject(jsonData: any): boolean {
     return false;
   }
   return true;
+}
+
+
+/**
+ * Test whether a non-null object implements `IContrib`.
+ */
+function isContrib(obj: any): boolean {
+  return 'item' in obj;
+}
+
+
+/**
+ * Test whether a non-null object implements `IReceiver`.
+ */
+function isReceiver(obj: any): boolean {
+  return typeof obj.add === 'function' && typeof obj.remove === 'function';
 }
 
 
@@ -612,18 +693,18 @@ function createPluginSpec(name: string, plugin: any): IPluginSpec {
  */
 class Extension implements IExtension {
   /**
-   * Create a new extension from a spec, item, and data.
+   * Create a new extension from a spec, contrib, and data.
    *
    * @param spec - The specification for the extension.
    *
-   * @param item - The behavioral object for the extension, or `null`.
+   * @param contrib - The contribution for the extension, or `null`.
    *
    * @param data - The parsed JSON data for the extension, or `null`.
    *
    * @returns A new extension instance.
    */
-  static create(spec: IExtensionSpec, item: any, data: any): Extension {
-    return new Extension(spec.id, spec.point, item, data, spec.config);
+  static create(spec: IExtensionSpec, contrib: IContrib, data: any): Extension {
+    return new Extension(spec.id, spec.point, contrib, data, spec.config);
   }
 
   /**
@@ -633,18 +714,18 @@ class Extension implements IExtension {
    *
    * @param point - The identifier of the target extension point.
    *
-   * @param item - The behavioral object for the extension, or `null`.
+   * @param contrib - The contribution for the extension, or `null`.
    *
    * @param data - The parsed JSON data for the extension, or `null`.
    *
    * @param config - The static configuration data, or `null`.
    */
-  constructor(id: string, point: string, item: any, data: any, config: any) {
+  constructor(id: string, point: string, contrib: IContrib, data: any, config: any) {
     this._id = id;
     this._point = point;
-    this._item = item || null;
     this._data = data || null;
     this._config = config || null;
+    this._contrib = contrib || null;
   }
 
   /**
@@ -655,10 +736,10 @@ class Extension implements IExtension {
       return;
     }
     this._disposed = true;
-    let temp = this._item;
-    this._item = null;
+    let temp = this._contrib;
     this._data = null;
     this._config = null;
+    this._contrib = null;
     safeDispose(temp);
   }
 
@@ -687,7 +768,7 @@ class Extension implements IExtension {
    * The behavioral object for the extension, or `null`.
    */
   get item(): any {
-    return this._item;
+    return this._contrib ? this._contrib.item : null;
   }
 
   /**
@@ -706,10 +787,10 @@ class Extension implements IExtension {
 
   private _id: string;
   private _point: string;
-  private _item: any;
   private _data: any;
   private _config: any;
   private _disposed = false;
+  private _contrib: IContrib;
 }
 
 
@@ -870,7 +951,12 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
     // Load the result of the factory.
     return factory();
 
-  }).then(item => {
+  }).then(contrib => {
+
+    // Throw an error if the contribution interface is invalid.
+    if (contrib && !isContrib(contrib)) {
+      throw new Error(`Extension '${spec.id}' has invalid contribution.`);
+    }
 
     // Clear the loader promise.
     record.promise = null;
@@ -878,9 +964,9 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
     // If the record was disposed before reaching this point, release
     // the item. Otherwise, create the extension and update the record.
     if (record.state === RecordState.Disposed) {
-      safeDispose(item);
+      safeDispose(contrib);
     } else {
-      record.value = Extension.create(spec, item, data);
+      record.value = Extension.create(spec, contrib, data);
       record.state = RecordState.Loaded;
     }
 
@@ -947,40 +1033,6 @@ function disposeExtension(id: string): void {
 //-----------------------------------------------------------------------------
 // Extension Point Implementation
 //-----------------------------------------------------------------------------
-
-/**
- * A receiver object for an extension point.
- */
-interface IReceiver {
-  /**
-   * Add an extension to the extension point.
-   *
-   * @param extension - The extension to add to the point.
-   *
-   * #### Notes
-   * This should be a no-op if the extension has already been added.
-   */
-  add(extension: IExtension): void;
-
-  /**
-   * Remove an extension from the extension point.
-   *
-   * @param id - The id of the extension to remove.
-   *
-   * #### Notes
-   * This should be a no-op if the extension has not been added.
-   */
-  remove(id: string): void;
-}
-
-
-/**
- * Test whether an object implements `IReceiver`.
- */
-function isReceiver(item: any): boolean {
-  return typeof item.add === 'function' && typeof item.remove === 'function';
-}
-
 
 /**
  * A concrete implementation of `IExtensionPoint`.

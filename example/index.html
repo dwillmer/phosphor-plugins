@@ -1,7 +1,70 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <script src="node_modules/systemjs/dist/system.js"></script>
+  <script>
+    System.config({
+      'map': {
+        'system-json': 'node_modules/systemjs-plugin-json/json.js',
+        'phosphor-plugins': 'phosphor-plugins/index.js',
+        'phosphor-disposable': 'node_modules/phosphor-disposable/lib/index.js'
+      },
+      'packages': {
+        '.': {
+          'defaultExtension': 'js',
+          'meta': {
+            '*.json': { 'loader': 'system-json' }
+          }
+        }
+      }
+    });
+  </script>
+</head>
 <body>
-    <script src="node_modules/steal/steal.js" data-main="index"></script>
-</select>
+  <button id="load-foo">Load Foo Plugin</button>
+  <button id="load-bar">Load Bar Plugin</button>
+  <button id="unload-foo">Unload Foo Plugin</button>
+  <button id="unload-bar">Unload Bar Plugin</button>
+  <script>
+    System.import('phosphor-plugins').then(function(lib) {
+      var loadFoo = document.getElementById('load-foo');
+      var loadBar = document.getElementById('load-bar');
+      var unloadFoo = document.getElementById('unload-foo');
+      var unloadBar = document.getElementById('unload-bar');
+
+      var fooDisp = null;
+      var barDisp = null;
+
+      loadFoo.onclick = function() {
+        if (!fooDisp) {
+          console.log('Loading Foo');
+          fooDisp = lib.registerPlugin('foo');
+        }
+      };
+
+      loadBar.onclick = function() {
+        if (!barDisp) {
+          console.log('Loading Bar');
+          barDisp = lib.registerPlugin('bar');
+        }
+      };
+
+      unloadFoo.onclick = function() {
+        if (fooDisp) {
+          console.log('Unloading Foo');
+          fooDisp.dispose();
+          fooDisp = null;
+        }
+      };
+
+      unloadBar.onclick = function() {
+        if (barDisp) {
+          console.log('Unloading Bar');
+          barDisp.dispose();
+          barDisp = null;
+        }
+      };
+    });
+  </script>
 </body>
 </html>

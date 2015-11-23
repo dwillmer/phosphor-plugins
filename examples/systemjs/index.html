@@ -5,6 +5,7 @@
   <script>
     System.config({
       'map': {
+        'system-css': 'node_modules/system-css/css.js',
         'system-json': 'node_modules/systemjs-plugin-json/json.js',
         'phosphor-plugins': 'phosphor-plugins/index.js',
         'phosphor-disposable': 'node_modules/phosphor-disposable/lib/index.js',
@@ -14,6 +15,7 @@
         '.': {
           'defaultExtension': 'js',
           'meta': {
+            '*.css': { 'loader': 'system-css' },
             '*.json': { 'loader': 'system-json' }
           }
         }
@@ -26,6 +28,7 @@
   <button id="load-bar">Load Bar Plugin</button>
   <button id="unload-foo">Unload Foo Plugin</button>
   <button id="unload-bar">Unload Bar Plugin</button>
+  <div id="foo">
   <script>
     System.import('phosphor-plugins').then(function(lib) {
       var loadFoo = document.getElementById('load-foo');

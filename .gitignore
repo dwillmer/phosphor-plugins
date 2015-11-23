@@ -7,3 +7,4 @@ node_modules
 test/build
 test/coverage
 examples/*/phosphor-plugins
+examples/*/bar

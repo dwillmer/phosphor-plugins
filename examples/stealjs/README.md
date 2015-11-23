@@ -10,8 +10,9 @@ To run the example, run `npm run build:examples` from the top level
 directory and browse to `index.html`.  Note that `phosphor-plugins/lib` is
 copied to this directory as `phosphor-plugins` so it can be served locally.
 
-The individual plugins can be loaded and unloaded using the provided buttons,
-and descriptive messages are printed to the console.
+The individual plugins can be loaded and unloaded using the provided buttons.
+Note that both plugins must be loaded in either order for the content to be
+rendered.  Descriptive messages are also printed to the console.
 
 Steal.js will crawl the `node_modules` directory, fetching the `package.json`
 files to set the config paths for each npm package.  However, the paths

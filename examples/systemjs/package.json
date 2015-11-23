@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "dependencies": {
+    "phosphor-disposable": "^1.0.5",
+    "foo": "^0.1.0",
+    "systemjs": "^0.19.6",
+    "systemjs-plugin-json": "^0.1.0"
+  },
+  "scripts": {
+    "postinstall": "npm dedupe"
+  }
+}

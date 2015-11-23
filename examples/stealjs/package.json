@@ -1,9 +1,9 @@
 {
   "private": true,
   "dependencies": {
+    "foo": "^0.1.0",
     "phosphor-disposable": "^1.0.5",
-    "systemjs": "^0.19.6",
-    "systemjs-plugin-json": "^0.1.0"
+    "steal": "^0.12.7"
   },
   "scripts": {
     "postinstall": "npm dedupe"

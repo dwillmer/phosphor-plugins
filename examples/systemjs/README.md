@@ -2,7 +2,8 @@ SystemJS Example
 ---------------
 
 In this example, [SystemJS](https://github.com/systemjs/systemjs) is used to
-load two Phosphor plugins, one of which is a local package (`./bar`), and the other an npm package (`./node_modules/foo`).
+load two Phosphor plugins, one of which is a local package (`./bar`), and the
+other an npm package (`./node_modules/foo`).
 
 To run the example, run `npm run build:examples` from the top level
 `phosphor-plugins` directory, then start an HTTP server from this

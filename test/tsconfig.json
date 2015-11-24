@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES5"
+  },
+  "files": [
+    "../typings/expect.js/expect.js.d.ts",
+    "../typings/mocha/mocha.d.ts",
+    "index.ts"
+  ]
+}

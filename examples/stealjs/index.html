@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="stylesheet" type="text/css" href="index.css">
   <script src="node_modules/steal/steal.js" data-main="index"></script>
   <script>
     System.config({
@@ -14,10 +15,16 @@
   </script>
 </head>
 <body>
-  <button id="load-foo">Load Foo Plugin</button>
-  <button id="load-bar">Load Bar Plugin</button>
-  <button id="unload-foo">Unload Foo Plugin</button>
-  <button id="unload-bar">Unload Bar Plugin</button>
-  <div id="foo">
+  <div id="main">
+    <button id="load-foo">Load Foo Plugin</button>
+    <button id="load-bar">Load Bar Plugin</button>
+    <button id="unload-foo">Unload Foo Plugin</button>
+    <button id="unload-bar">Unload Bar Plugin</button>
+    <div id="content">
+      <div id="foo"></div>
+      <div id="bar"></div>
+    </div>
+    <div id="foo-content"></div>
+  </div>
 </body>
 </html>

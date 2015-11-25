@@ -5,7 +5,25 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-.bar-content {
-  padding: 10px;
-  border: 2px solid black;
+#content {
+  width: 600px;
+  height: 50px;
+  margin: 10px;
+}
+
+
+#foo {
+  width: 300px;
+  float: left;
+}
+
+
+#bar {
+  width: 300px;
+  float: right;
+}
+
+
+#foo-content {
+  position: relative;
 }

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="stylesheet" type="text/css" href="index.css">
   <script src="node_modules/systemjs/dist/system.js"></script>
   <script>
     System.config({
@@ -24,51 +25,19 @@
   </script>
 </head>
 <body>
-  <button id="load-foo">Load Foo Plugin</button>
-  <button id="load-bar">Load Bar Plugin</button>
-  <button id="unload-foo">Unload Foo Plugin</button>
-  <button id="unload-bar">Unload Bar Plugin</button>
-  <div id="foo">
+  <div id="main">
+    <button id="load-foo">Load Foo Plugin</button>
+    <button id="load-bar">Load Bar Plugin</button>
+    <button id="unload-foo">Unload Foo Plugin</button>
+    <button id="unload-bar">Unload Bar Plugin</button>
+    <div id="content">
+      <div id="foo"></div>
+      <div id="bar"></div>
+    </div>
+    <div id="foo-content"></div>
+  </div>
   <script>
-    System.import('phosphor-plugins').then(function(lib) {
-      var loadFoo = document.getElementById('load-foo');
-      var loadBar = document.getElementById('load-bar');
-      var unloadFoo = document.getElementById('unload-foo');
-      var unloadBar = document.getElementById('unload-bar');
-
-      var fooDisp = null;
-      var barDisp = null;
-
-      loadFoo.onclick = function() {
-        if (!fooDisp) {
-          console.log('Loading Foo');
-          fooDisp = lib.registerPlugin('foo');
-        }
-      };
-
-      loadBar.onclick = function() {
-        if (!barDisp) {
-          console.log('Loading Bar');
-          barDisp = lib.registerPlugin('bar');
-        }
-      };
-
-      unloadFoo.onclick = function() {
-        if (fooDisp) {
-          console.log('Unloading Foo');
-          fooDisp.dispose();
-          fooDisp = null;
-        }
-      };
-
-      unloadBar.onclick = function() {
-        if (barDisp) {
-          console.log('Unloading Bar');
-          barDisp.dispose();
-          barDisp = null;
-        }
-      };
-    });
+    System.import('index');
   </script>
 </body>
 </html>

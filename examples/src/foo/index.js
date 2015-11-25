@@ -19,7 +19,7 @@ function createFooReceiver() {
   return {
     add: function(extension) {
       console.log('Add to `my-foo:foo-point`:', extension);
-      var node = document.getElementById('foo');
+      var node = document.getElementById('foo-content');
       node.appendChild(extension.item);
     },
     remove: function(id) {
@@ -27,7 +27,7 @@ function createFooReceiver() {
     },
     dispose: function() {
       console.log('Dispose `my-foo:foo-point`');
-      var node = document.getElementById('foo');
+      var node = document.getElementById('foo-content');
       while (node.firstChild) {
         node.removeChild(node.firstChild);
       }

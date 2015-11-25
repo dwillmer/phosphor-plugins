@@ -14,4 +14,6 @@ for (var ex of ['stealjs', 'systemjs']) {
     mkdirp.sync('examples/' + ex + '/node_modules/foo');
 
     cp.sync('examples/src/foo/*.*', 'examples/' + ex + '/node_modules/foo');
+
+    cp.sync('examples/src/*.*', 'examples/' + ex);
 }

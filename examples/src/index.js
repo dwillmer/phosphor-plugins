@@ -3,6 +3,8 @@
     var loadBar = document.getElementById('load-bar');
     var unloadFoo = document.getElementById('unload-foo');
     var unloadBar = document.getElementById('unload-bar');
+    var fooDiv = document.getElementById('foo');
+    var barDiv = document.getElementById('bar');
 
     var fooDisp = null;
     var barDisp = null;
@@ -10,6 +12,7 @@
     loadFoo.onclick = function() {
       if (!fooDisp) {
         console.log('Loading Foo');
+        fooDiv.innerHTML = 'Foo Loaded';
         fooDisp = lib.registerPlugin('foo');
       }
     };
@@ -18,6 +21,7 @@
       if (!barDisp) {
         console.log('Loading Bar');
         barDisp = lib.registerPlugin('bar');
+        barDiv.innerHTML = 'Bar Loaded';
       }
     };
 
@@ -26,6 +30,7 @@
         console.log('Unloading Foo');
         fooDisp.dispose();
         fooDisp = null;
+        fooDiv.innerHTML = '';
       }
     };
 
@@ -34,6 +39,7 @@
         console.log('Unloading Bar');
         barDisp.dispose();
         barDisp = null;
+        barDiv.innerHTML = '';
       }
     };
   });

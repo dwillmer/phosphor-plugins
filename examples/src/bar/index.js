@@ -43,7 +43,7 @@ exports.createBarReceiver = createBarReceiver;
  */
 function createFooContrib() {
   var node = document.createElement('div');
-  node.className = 'barContent';
+  node.className = 'bar-content';
   node.textContent = 'Bar Contribution to Foo';
   return {
     item: node,

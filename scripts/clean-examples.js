@@ -13,4 +13,12 @@ for (var ex of ['stealjs', 'systemjs']) {
         if (error) console.error(error);
     });
 
+    rimraf('examples/' + ex + '/index.js', function(error) {
+        if (error) console.error(error);
+    });
+
+    rimraf('examples/' + ex + '/index.css', function(error) {
+        if (error) console.error(error);
+    });
+
 }

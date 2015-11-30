@@ -3,7 +3,7 @@ module.exports = function (config) {
     basePath: '..',
     frameworks: ['systemjs', 'mocha'],
     reporters: ['mocha', 'coverage'],
-    files: ['test/index.js'],
+    files: ['test/build/index.js'],
     preprocessors: {
       'lib/*.js': ['coverage'],
     },
@@ -19,7 +19,7 @@ module.exports = function (config) {
       serveFiles: [
         'lib/*.*',
         'node_modules/**/*.*',
-        'example/**/*.*'
+        'examples/src/**/*.*'
       ],
     },
     port: 9876,

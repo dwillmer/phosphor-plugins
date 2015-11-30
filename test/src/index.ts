@@ -12,7 +12,7 @@ import expect = require('expect.js');
 import {
   IExtension, IExtensionPoint, listExtensions, listExtensionPoints,
   listPlugins, registerExtension, registerExtensionPoint, registerPlugin
-} from '../lib';
+} from '../../lib';
 
 
 /**

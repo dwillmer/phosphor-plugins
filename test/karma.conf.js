@@ -3,13 +3,13 @@ module.exports = function (config) {
     basePath: '..',
     frameworks: ['systemjs', 'mocha'],
     reporters: ['mocha'],
-    files: ['test/index.js'],
+    files: ['test/build/index.js'],
     systemjs: {
       configFile: ['test/system.conf.js'],
       serveFiles: [
         'lib/*.*',
         'node_modules/**/*.*',
-        'example/**/*.*'
+        'examples/src/**/*.*'
       ],
     },
     port: 9876,

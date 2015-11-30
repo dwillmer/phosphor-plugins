@@ -8,8 +8,8 @@ System.config({
     'phosphor-disposable': 'node_modules/phosphor-disposable/lib/index.js'
   },
   map: {
-    'bar': 'example/bar',
-    'foo': 'example/foo'
+    'bar': 'examples/src/bar',
+    'foo': 'examples/src/foo'
   },
   packages: {
     '.': {
@@ -17,6 +17,9 @@ System.config({
       meta: {
         '*.json': {
           loader: 'node_modules/systemjs-plugin-json/json.js'
+        },
+        '*.css': {
+          loader: 'node_modules/system-css/css.js'
         }
       }
     },

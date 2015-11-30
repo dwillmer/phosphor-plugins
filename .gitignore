@@ -6,4 +6,5 @@ lib
 node_modules
 test/build
 test/coverage
-example/phosphor-plugins
+examples/*/phosphor-plugins
+examples/*/bar

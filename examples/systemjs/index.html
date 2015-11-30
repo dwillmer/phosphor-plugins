@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="index.css">
+  <script src="node_modules/systemjs/dist/system.js"></script>
+  <script>
+    System.config({
+      'map': {
+        'system-css': 'node_modules/system-css/css.js',
+        'system-json': 'node_modules/systemjs-plugin-json/json.js',
+        'phosphor-plugins': 'phosphor-plugins/index.js',
+        'phosphor-disposable': 'node_modules/phosphor-disposable/lib/index.js',
+        'foo': 'node_modules/foo'
+      },
+      'packages': {
+        '.': {
+          'defaultExtension': 'js',
+          'meta': {
+            '*.css': { 'loader': 'system-css' },
+            '*.json': { 'loader': 'system-json' }
+          }
+        }
+      }
+    });
+  </script>
+</head>
+<body>
+  <div id="main">
+    <button id="load-foo">Load Foo Plugin</button>
+    <button id="load-bar">Load Bar Plugin</button>
+    <button id="unload-foo">Unload Foo Plugin</button>
+    <button id="unload-bar">Unload Bar Plugin</button>
+    <div id="content">
+      <div id="foo"></div>
+      <div id="bar"></div>
+    </div>
+    <div id="foo-content"></div>
+  </div>
+  <script>
+    System.import('index');
+  </script>
+</body>
+</html>

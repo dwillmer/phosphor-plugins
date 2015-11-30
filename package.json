@@ -20,10 +20,10 @@
   },
   "scripts": {
     "clean": "rimraf lib",
-    "clean:example": "rimraf example/phosphor-plugins && rimraf example/node_modules",
+    "clean:examples": "node scripts/clean-examples.js",
     "build:src": "tsc --project src",
     "build": "npm run build:src",
-    "build:example": "mkdirp example/phosphor-plugins && node scripts/copyjs.js && cd example && npm install",
+    "build:examples": "node scripts/copy-examples.js && node scripts/build-examples.js",
     "docs": "rimraf docs/api && typedoc --options scripts/tdoptions.json",
     "prepublish": "npm run build",
     "postinstall": "npm dedupe"

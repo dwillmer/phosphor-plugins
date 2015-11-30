@@ -7,6 +7,8 @@
 |----------------------------------------------------------------------------*/
 'use strict';
 
+var css = require('./index.css');
+
 
 /**
  * Create the receiver for the `my-bar:bar-point` extension point.
@@ -40,10 +42,19 @@ exports.createBarReceiver = createBarReceiver;
  * `Promise` which resolves to a contrib can be returned.
  */
 function createFooContrib() {
+  var node = document.createElement('div');
+  node.className = 'bar-content';
+  node.textContent = 'Bar Contribution to Foo';
   return {
-    item: { secret: 42 },
+    item: node,
     dispose: function() {
       console.log('Dispose `my-bar:bar-ext-0`');
+      var parent = node.parentNode;
+      if (!parent) {
+        console.log('Node already disposed');
+      } else {
+        parent.removeChild(node);
+      }
     },
   };
 }

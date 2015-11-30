@@ -42,21 +42,23 @@ exports.createBarReceiver = createBarReceiver;
  * `Promise` which resolves to a contrib can be returned.
  */
 function createFooContrib() {
-  var node = document.createElement('div');
-  node.className = 'bar-content';
-  node.textContent = 'Bar Contribution to Foo';
   return {
-    item: node,
+    item: createItem(),
     dispose: function() {
       console.log('Dispose `my-bar:bar-ext-0`');
-      var parent = node.parentNode;
-      if (!parent) {
-        console.log('Node already disposed');
-      } else {
-        parent.removeChild(node);
-      }
     },
   };
 }
 
 exports.createFooContrib = createFooContrib;
+
+
+/**
+ * Create the contrib item for the `my-foo:foo-point` extension point.
+ */
+function createItem() {
+  var node = document.createElement('div');
+  node.className = 'bar-content';
+  node.textContent = 'Bar Contribution to Foo';
+  return node;
+}

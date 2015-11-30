@@ -6,5 +6,11 @@ lib
 node_modules
 test/build
 test/coverage
-examples/*/phosphor-plugins
-examples/*/bar
+examples/stealjs/phosphor-plugins
+examples/stealjs/bar
+examples/stealjs/index.css
+examples/stealjs/index.js
+examples/systemjs/phosphor-plugins
+examples/systemjs/bar
+examples/systemjs/index.css
+examples/systemjs/index.js

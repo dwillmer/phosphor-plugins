@@ -16,21 +16,26 @@
  * `Promise` which resolves to a receiver can be returned.
  */
 function createFooReceiver() {
+  var extensionMap = {};
   return {
     add: function(extension) {
       console.log('Add to `my-foo:foo-point`:', extension);
-      var node = document.getElementById('foo-content');
-      node.appendChild(extension.item);
+      extensionMap[extension.id] = extension;
+      var content = document.getElementById('foo-content');
+      content.appendChild(extension.item);
     },
     remove: function(id) {
       console.log('Remove from `my-foo:foo-point`:', id);
+      var extension = extensionMap[id];
+      delete extensionMap[id];
+      var content = document.getElementById('foo-content');
+      content.removeChild(extension.item);
     },
     dispose: function() {
       console.log('Dispose `my-foo:foo-point`');
-      var node = document.getElementById('foo-content');
-      while (node.firstChild) {
-        node.removeChild(node.firstChild);
-      }
+      var content = document.getElementById('foo-content');
+      content.textContent = '';
+      extensionMap = null;
     },
   };
 }

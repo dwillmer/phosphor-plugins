@@ -1,24 +1,19 @@
 var rimraf = require('rimraf');
 
+
+function logError(err) {
+  if (err) console.error(err);
+}
+
+
 for (var ex of ['stealjs', 'systemjs']) {
-    rimraf('examples/' + ex + '/phosphor-plugins', function(error) {
-        if (error) console.error(error);
-    });
+  rimraf('examples/' + ex + '/phosphor-plugins', logError);
 
-    rimraf('examples/' + ex + '/node_modules', function(error) {
-        if (error) console.error(error);
-    });
+  rimraf('examples/' + ex + '/node_modules', logError);
 
-    rimraf('examples/' + ex + '/bar', function(error) {
-        if (error) console.error(error);
-    });
+  rimraf('examples/' + ex + '/bar', logError);
 
-    rimraf('examples/' + ex + '/index.js', function(error) {
-        if (error) console.error(error);
-    });
+  rimraf('examples/' + ex + '/index.js', logError);
 
-    rimraf('examples/' + ex + '/index.css', function(error) {
-        if (error) console.error(error);
-    });
-
+  rimraf('examples/' + ex + '/index.css', logError);
 }

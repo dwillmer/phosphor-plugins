@@ -9,7 +9,7 @@ module.exports = function (config) {
       serveFiles: [
         'lib/*.*',
         'node_modules/**/*.*',
-        'examples/src/**/*.*'
+        'test/src/**/*.*'
       ],
     },
     port: 9876,

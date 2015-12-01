@@ -372,17 +372,17 @@ function createMap<T>(): StringMap<T> {
 
 
 /**
- * Safely dispose of something which may be a disposable.
+ * Safely dispose a disposable.
  *
  * All errors will be caught and logged to the console.
+ *
+ * This function is null-safe.
  */
-function safeDispose(obj: any): void {
-  if (obj && typeof obj.dispose === 'function') {
-    try {
-      obj.dispose();
-    } catch (err) {
-      console.error(err);
-    }
+function safeDispose(obj: IDisposable): void {
+  try {
+    if (obj) obj.dispose();
+  } catch (err) {
+    console.error(err);
   }
 }
 
@@ -1072,7 +1072,7 @@ function disposeExtension(id: string): void {
 
   // Dispose of the extension.
   record.state = RecordState.Disposed;
-  record.value.dispose();
+  safeDispose(record.value);
 }
 
 
@@ -1368,7 +1368,7 @@ function disposePoint(id: string): void {
 
   // Dispose of the extension point.
   record.state = RecordState.Disposed;
-  record.value.dispose();
+  safeDispose(record.value);
 }
 
 

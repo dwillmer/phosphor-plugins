@@ -108,38 +108,38 @@ interface IExtensionPoint extends IDisposable {
 /**
  * An object which represents a contribution to an extension point.
  *
+ * #### Notes
  * Objects of this type are created by an extension factory function
  * to provide a behavioral object to a matching extension point.
+ *
+ * Contributions are automatically disposed when the plugin which
+ * registered the extension is unloaded.
  *
  * This type is not used for manually registered extensions.
  */
 export
-interface IContrib {
+interface IContribution extends IDisposable {
   /**
    * The behavioral object to provide to the extension point.
    */
   item: any;
-
-  /**
-   * Dispose of the resources held by the extension.
-   *
-   * If this method is provided, it will be invoked when the plugin
-   * which registered the extension is unloaded.
-   */
-  dispose?(): void;
 }
 
 
 /**
  * A receiver object for an extension point.
  *
+ * #### Notes
  * Objects of this type are created by an extension point factory
  * function to handle addition and removal of matching extensions.
+ *
+ * Receivers are automatically disposed when the plugin which
+ * registered the extension point is unloaded.
  *
  * This type is not used for manually registered extension points.
  */
 export
-interface IReceiver {
+interface IReceiver extends IDisposable {
   /**
    * Add an extension to the extension point.
    *
@@ -159,14 +159,6 @@ interface IReceiver {
    * This should be a no-op if the extension has not been added.
    */
   remove(id: string): void;
-
-  /**
-   * Dispose of the resources held by the receiver.
-   *
-   * If this method is provided, it will be invoked when the plugin
-   * which registered the extension point is unloaded.
-   */
-  dispose?(): void;
 }
 
 
@@ -413,10 +405,34 @@ function isObject(jsonData: any): boolean {
 
 
 /**
- * Test whether a non-null object implements `IContrib`.
+ * Test whether an object has a given property.
  */
-function isContrib(obj: any): boolean {
-  return 'item' in obj;
+function hasProperty(obj: any, name: string): boolean {
+  return name in obj;
+}
+
+
+/**
+ * Test whether an object has a given function.
+ */
+function hasFunction(obj: any, name: string): boolean {
+  return typeof obj[name] === 'function';
+}
+
+
+/**
+ * Test whether an object implements `IDisposable`.
+ */
+function isDisposable(obj: any): boolean {
+  return hasProperty(obj, 'isDisposed') && hasFunction(obj, 'dispose');
+}
+
+
+/**
+ * Test whether a non-null object implements `IContribution`.
+ */
+function isContribution(obj: any): boolean {
+  return hasProperty(obj, 'item') && isDisposable(obj);
 }
 
 
@@ -424,7 +440,7 @@ function isContrib(obj: any): boolean {
  * Test whether a non-null object implements `IReceiver`.
  */
 function isReceiver(obj: any): boolean {
-  return typeof obj.add === 'function' && typeof obj.remove === 'function';
+  return hasFunction(obj, 'add') && hasFunction(obj, 'remove') && isDisposable(obj);
 }
 
 
@@ -712,7 +728,7 @@ function createPluginSpec(name: string, plugin: any): IPluginSpec {
  */
 class Extension implements IExtension {
   /**
-   * Create a new extension from a spec, contrib, and data.
+   * Create a new extension from a spec, contribution, and data.
    *
    * @param spec - The specification for the extension.
    *
@@ -722,7 +738,7 @@ class Extension implements IExtension {
    *
    * @returns A new extension instance.
    */
-  static create(spec: IExtensionSpec, contrib: IContrib, data: any): Extension {
+  static create(spec: IExtensionSpec, contrib: IContribution, data: any): Extension {
     return new Extension(spec.id, spec.point, spec.plugin, contrib, data, spec.config);
   }
 
@@ -741,7 +757,7 @@ class Extension implements IExtension {
    *
    * @param config - The static configuration data, or `null`.
    */
-  constructor(id: string, point: string, plugin: string, contrib: IContrib, data: any, config: any) {
+  constructor(id: string, point: string, plugin: string, contrib: IContribution, data: any, config: any) {
     this._id = id;
     this._point = point;
     this._plugin = plugin;
@@ -820,7 +836,7 @@ class Extension implements IExtension {
   private _data: any;
   private _config: any;
   private _disposed = false;
-  private _contrib: IContrib;
+  private _contrib: IContribution;
 }
 
 
@@ -984,7 +1000,7 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
   }).then(contrib => {
 
     // Throw an error if the contribution interface is invalid.
-    if (contrib && !isContrib(contrib)) {
+    if (contrib && !isContribution(contrib)) {
       throw new Error(`Extension '${spec.id}' has invalid contribution.`);
     }
 

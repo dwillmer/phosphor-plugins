@@ -38,6 +38,11 @@ interface IExtension extends IDisposable {
   point: string;
 
   /**
+   * The name of the plugin which owns the extension, or `''`.
+   */
+  plugin: string;
+
+  /**
    * The behavioral object for the extension, or `null`.
    */
   item: any;
@@ -72,6 +77,11 @@ interface IExtensionPoint extends IDisposable {
    * The globally unique identifier of the extension point.
    */
   id: string;
+
+  /**
+   * The name of the plugin which owns the extension point, or `''`.
+   */
+  plugin: string;
 
   /**
    * Add an extension to the extension point.
@@ -257,6 +267,7 @@ function registerExtension(extension: IExtension): IDisposable {
   let spec: IExtensionSpec = {
     id: extension.id,
     point: extension.point,
+    plugin: extension.plugin,
   };
 
   // Create a new loaded record for the extension.
@@ -302,6 +313,7 @@ function registerExtensionPoint(point: IExtensionPoint): IDisposable {
   // Create a compatible spec for the extension point.
   let spec: IPointSpec = {
     id: point.id,
+    plugin: point.plugin,
   };
 
   // Create a new loaded record for the extension.
@@ -711,7 +723,7 @@ class Extension implements IExtension {
    * @returns A new extension instance.
    */
   static create(spec: IExtensionSpec, contrib: IContrib, data: any): Extension {
-    return new Extension(spec.id, spec.point, contrib, data, spec.config);
+    return new Extension(spec.id, spec.point, spec.plugin, contrib, data, spec.config);
   }
 
   /**
@@ -721,15 +733,18 @@ class Extension implements IExtension {
    *
    * @param point - The identifier of the target extension point.
    *
+   * @param plugin - The name of the plugin which owns the extension.
+   *
    * @param contrib - The contribution for the extension, or `null`.
    *
    * @param data - The parsed JSON data for the extension, or `null`.
    *
    * @param config - The static configuration data, or `null`.
    */
-  constructor(id: string, point: string, contrib: IContrib, data: any, config: any) {
+  constructor(id: string, point: string, plugin: string, contrib: IContrib, data: any, config: any) {
     this._id = id;
     this._point = point;
+    this._plugin = plugin;
     this._data = data || null;
     this._config = config || null;
     this._contrib = contrib || null;
@@ -772,6 +787,13 @@ class Extension implements IExtension {
   }
 
   /**
+   * The name of the plugin which owns the extension.
+   */
+  get plugin(): string {
+    return this._plugin;
+  }
+
+  /**
    * The behavioral object for the extension, or `null`.
    */
   get item(): any {
@@ -794,6 +816,7 @@ class Extension implements IExtension {
 
   private _id: string;
   private _point: string;
+  private _plugin: string;
   private _data: any;
   private _config: any;
   private _disposed = false;
@@ -818,7 +841,7 @@ interface IExtensionSpec {
   /**
    * The name of the plugin which owns the extension.
    */
-  plugin?: string;
+  plugin: string;
 
   /**
    * The relative path to the extension main module.
@@ -1053,7 +1076,7 @@ class ExtensionPoint implements IExtensionPoint {
    * @param receiver - The receiver for the extension point, or `null`.
    */
   static create(spec: IPointSpec, receiver: IReceiver): ExtensionPoint {
-    return new ExtensionPoint(spec.id, receiver);
+    return new ExtensionPoint(spec.id, spec.plugin, receiver);
   }
 
   /**
@@ -1061,10 +1084,13 @@ class ExtensionPoint implements IExtensionPoint {
    *
    * @param id - The globally unique id of the extension point.
    *
+   * @param plugin - The name of plugin which owns the extension point.
+   *
    * @param receiver - The receiver for the extension point, or `null`.
    */
-  constructor(id: string, receiver: IReceiver) {
+  constructor(id: string, plugin: string, receiver: IReceiver) {
     this._id = id;
+    this._plugin = plugin;
     this._receiver = receiver || null;
   }
 
@@ -1096,6 +1122,13 @@ class ExtensionPoint implements IExtensionPoint {
   }
 
   /**
+   * The name of the plugin which owns the extension point.
+   */
+  get plugin(): string {
+    return this._plugin;
+  }
+
+  /**
    * Add an extension to the extension point.
    */
   add(extension: IExtension): void {
@@ -1110,6 +1143,7 @@ class ExtensionPoint implements IExtensionPoint {
   }
 
   private _id: string;
+  private _plugin: string;
   private _disposed = false;
   private _receiver: IReceiver;
 }
@@ -1125,9 +1159,9 @@ interface IPointSpec {
   id: string;
 
   /**
-   * The name of the plugin which owns the point.
+   * The name of the plugin which owns the extension point.
    */
-  plugin?: string;
+  plugin: string;
 
   /**
    * The relative path to the extension point main module.

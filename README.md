@@ -172,6 +172,8 @@ let point: IExtensionPoint = {
 
   id: 'my-plugin:my-dynamic-point',
 
+  plugin: 'my-package',
+
   isDisposed: false,
 
   dispose: () => {
@@ -203,6 +205,8 @@ let ext: IExtension = {
   id: 'my-other-plugin:my-dynamic-ext',
 
   point: 'my-plugin:my-dynamic-point',
+
+  plugin: 'my-other-package',
 
   item: { value: 42 },
 

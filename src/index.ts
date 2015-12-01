@@ -17,6 +17,13 @@ import {
  *
  * #### Notes
  * All properties of an extension are treated as read-only.
+ *
+ * Extensions are automatically disposed by the framework. This occurs
+ * when the plugin which registered the extension is unloaded, or when
+ * a manually registered extension is unregistered. Before an extension
+ * is disposed, it is first removed from any matching extension point.
+ *
+ * **See also** [[registerPlugin]], [[registerExtension]]
  */
 export
 interface IExtension extends IDisposable {
@@ -52,6 +59,12 @@ interface IExtension extends IDisposable {
  *
  * #### Notes
  * All properties of an extension point are treated as read-only.
+ *
+ * Extension points are automatically disposed by the framework. This
+ * occurs when the plugin which registered the point is unloaded, or
+ * when a manually registered extension point is unregistered.
+ *
+ * **See also** [[registerPlugin]], [[registerExtensionPoint]]
  */
 export
 interface IExtensionPoint extends IDisposable {

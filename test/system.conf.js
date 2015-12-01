@@ -8,8 +8,8 @@ System.config({
     'phosphor-disposable': 'node_modules/phosphor-disposable/lib/index.js'
   },
   map: {
-    'bar': 'examples/src/bar',
-    'foo': 'examples/src/foo'
+    'bar': 'test/src/bar',
+    'foo': 'test/src/foo'
   },
   packages: {
     '.': {

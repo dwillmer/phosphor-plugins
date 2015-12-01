@@ -117,6 +117,7 @@ describe('phosphor-plugins', function () {
       expect(listExtensions()).to.eql([]);
       setTimeout(() => {
         expect(listExtensions()).to.eql(['my-bar:bar-ext-0', 'my-bar:bar-ext-1']);
+        expect((window as any).fooContrib.id).to.be('my-bar:bar-ext-0');
         fooDisp.dispose();
         barDisp.dispose();
         done();

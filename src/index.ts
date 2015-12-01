@@ -69,7 +69,7 @@ interface IExtension extends IDisposable {
 export
 interface IExtensionPoint extends IDisposable {
   /**
-   * The globally unique id of the extension point.
+   * The globally unique identifier of the extension point.
    */
   id: string;
 

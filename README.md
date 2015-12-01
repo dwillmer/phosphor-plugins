@@ -222,5 +222,5 @@ let ext: IExtension = {
   },
 };
 
-registerExtension(extension);
+registerExtension(ext);
 ```

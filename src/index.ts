@@ -218,7 +218,6 @@ function registerPlugin(name: string): IDisposable {
   // Create a new unloaded record for the plugin.
   let record: IPluginRecord = {
     state: RecordState.Unloaded,
-    name: name,
     spec: null,
   };
 
@@ -226,7 +225,7 @@ function registerPlugin(name: string): IDisposable {
   pluginRegistry[name] = record;
 
   // Load the plugin record.
-  loadPlugin(record);
+  loadPlugin(name, record);
 
   // Return a disposable which will unload the plugin.
   return new DisposableDelegate(() => { disposePlugin(name); });
@@ -452,11 +451,6 @@ interface IPluginRecord {
   state: RecordState;
 
   /**
-   * The name of the plugin.
-   */
-  name: string;
-
-  /**
    * The specification of the plugin, or `null` if not yet loaded.
    */
   spec: IPluginSpec;
@@ -472,7 +466,7 @@ var pluginRegistry = createMap<IPluginRecord>();
 /**
  * Ensure a plugin record is fully loaded.
  */
-function loadPlugin(record: IPluginRecord): void {
+function loadPlugin(name: string, record: IPluginRecord): void {
   // If the record is not unloaded, there is nothing to do.
   if (record.state !== RecordState.Unloaded) {
     return;
@@ -485,7 +479,7 @@ function loadPlugin(record: IPluginRecord): void {
   Promise.resolve().then(() => {
 
     // Load the plugin package JSON.
-    return System.import(`${record.name}/package.json`);
+    return System.import(`${name}/package.json`);
 
   }).then(pkg => {
 
@@ -505,7 +499,7 @@ function loadPlugin(record: IPluginRecord): void {
     }
 
     // Create the plugin spec from the plugin JSON data.
-    record.spec = createPluginSpec(record.name, pkg['phosphor-plugin']);
+    record.spec = createPluginSpec(name, pkg['phosphor-plugin']);
     record.state = RecordState.Loaded;
 
     // Register the plugin extension points.
@@ -521,11 +515,11 @@ function loadPlugin(record: IPluginRecord): void {
   }).catch(err => {
 
     // If an error occurs while loading, log it to the console.
-    console.error(`Error occured while loading plugin '${record.name}'.`);
+    console.error(`Error occured while loading plugin '${name}'.`);
     console.error(err);
 
     // Unregister the plugin and mark it as disposed.
-    delete pluginRegistry[record.name];
+    delete pluginRegistry[name];
     record.state = RecordState.Disposed;
 
   });

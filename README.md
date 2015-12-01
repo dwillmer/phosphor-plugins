@@ -125,7 +125,7 @@ An extension is specified as an object with the following fields:
   module is loaded.
 - `factory` - *Optional*. The name of a function in the `main` module which
   creates the contribution for the extension. The function should take no
-  arguments and return `void | IContrib | Promise<IContrib>`.
+  arguments and return `void | IContribution | Promise<IContribution>`.
 - `data` - *Optional*. The path to the JSON data file for the extension. Some
   extension points are able to consume data from JSON files, such as menu and
   key binding specifications. This path is relative to the plugin.

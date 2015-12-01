@@ -32,17 +32,19 @@ let messages: string[] = [];
  */
 let point: IExtensionPoint = {
   id: POINT,
+  plugin: 'test-plugin',
+  isDisposed: false,
+  dispose: function() {
+    this.isDisposed = true;
+    messages.push(`Disposed ${POINT}`);
+  },
   add: extension => {
     messages.push(`Added ${extension.id}`);
   },
   remove: id => {
     messages.push(`Removed ${id}`);
   },
-  isDisposed: false,
-  dispose: () => {
-    messages.push(`Disposed ${POINT}`);
-  }
-}
+};
 
 
 /**
@@ -60,14 +62,16 @@ function createExtension(): IExtension {
   return {
     id: id,
     point: POINT,
+    plugin: 'test-plugin',
     item: item,
     data: null,
     config: null,
     isDisposed: false,
-    dispose: () => {
+    dispose: function() {
+      this.isDisposed = true;
       messages.push(`Disposed ${id}`);
-    }
-  }
+    },
+  };
 }
 
 

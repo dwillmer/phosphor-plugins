@@ -19,14 +19,19 @@ var css = require('./index.css');
  */
 function createBarReceiver() {
   return {
+    isDisposed: false,
+
+    dispose: function() {
+      this.isDisposed = true;
+      console.log('Dispose `my-bar:bar-point`');
+    },
+
     add: function(extension) {
       console.log('Add to `my-bar:bar-point`:', extension);
     },
+
     remove: function(id) {
       console.log('Remove from `my-bar:bar-point`:', id);
-    },
-    dispose: function() {
-      console.log('Dispose `my-bar:bar-point`');
     },
   };
 }
@@ -37,20 +42,24 @@ exports.createBarReceiver = createBarReceiver;
 /**
  * Create the contribution for the `my-foo:foo-point` extension point.
  *
- * The returned object must implement the `IContrib` interface. If an
- * asynchronous task must be run before the contrib can be created, a
- * `Promise` which resolves to a contrib can be returned.
+ * The returned object must implement the `IContribution` interface.
+ * If  an asynchronous task must be run before the contribution can be
+ * created, a `Promise` which resolves to a contribution can be returned.
  */
-function createFooContrib() {
+function createFooContribution() {
   return {
     item: createItem(),
+
+    isDisposed: false,
+
     dispose: function() {
+      this.isDisposed = true;
       console.log('Dispose `my-bar:bar-ext-0`');
     },
   };
 }
 
-exports.createFooContrib = createFooContrib;
+exports.createFooContribution = createFooContribution;
 
 
 /**

@@ -18,24 +18,29 @@
 function createFooReceiver() {
   var extensionMap = {};
   return {
+    isDisposed: false,
+
+    dispose: function() {
+      this.isDisposed = true;
+      console.log('Dispose `my-foo:foo-point`');
+      var content = document.getElementById('foo-content');
+      content.textContent = '';
+      extensionMap = null;
+    },
+
     add: function(extension) {
       console.log('Add to `my-foo:foo-point`:', extension);
       extensionMap[extension.id] = extension;
       var content = document.getElementById('foo-content');
       content.appendChild(extension.item);
     },
+
     remove: function(id) {
       console.log('Remove from `my-foo:foo-point`:', id);
       var extension = extensionMap[id];
       delete extensionMap[id];
       var content = document.getElementById('foo-content');
       content.removeChild(extension.item);
-    },
-    dispose: function() {
-      console.log('Dispose `my-foo:foo-point`');
-      var content = document.getElementById('foo-content');
-      content.textContent = '';
-      extensionMap = null;
     },
   };
 }

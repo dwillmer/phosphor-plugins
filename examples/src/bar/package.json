@@ -17,7 +17,7 @@
         "main": "index.js",
         "id": "my-bar:bar-ext-0",
         "point": "my-foo:foo-point",
-        "factory": "createFooContrib",
+        "factory": "createFooContribution",
         "config": {
           "size": 12,
           "names": ["Mary", "Joe", "Sue"]

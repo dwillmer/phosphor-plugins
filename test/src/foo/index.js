@@ -18,6 +18,7 @@
 function createFooReceiver() {
   var extensionMap = {};
   return {
+    isDisposed: true,
     add: function(extension) {
       console.log('Add to `my-foo:foo-point`:', extension);
       extensionMap[extension.id] = extension;
@@ -29,6 +30,7 @@ function createFooReceiver() {
       delete extensionMap[id];
     },
     dispose: function() {
+      this.isDisposed = true;
       console.log('Dispose `my-foo:foo-point`');
       extensionMap = null;
     },

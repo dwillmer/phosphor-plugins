@@ -19,6 +19,7 @@ var css = require('./index.css');
  */
 function createBarReceiver() {
   return {
+    isDisposed: true,
     add: function(extension) {
       console.log('Add to `my-bar:bar-point`:', extension);
     },
@@ -26,6 +27,7 @@ function createBarReceiver() {
       console.log('Remove from `my-bar:bar-point`:', id);
     },
     dispose: function() {
+      this.isDisposed = true;
       console.log('Dispose `my-bar:bar-point`');
     },
   };
@@ -43,8 +45,10 @@ exports.createBarReceiver = createBarReceiver;
  */
 function createFooContrib() {
   return {
+    isDisposed: true,
     item: createItem(),
     dispose: function() {
+      this.isDisposed = true;
       console.log('Dispose `my-bar:bar-ext-0`');
     },
   };

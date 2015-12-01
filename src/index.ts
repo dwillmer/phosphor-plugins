@@ -543,8 +543,7 @@ function loadPlugin(name: string, record: IPluginRecord): void {
   }).catch(err => {
 
     // If an error occurs while loading, log it to the console.
-    console.error(`Error occured while loading plugin '${name}'.`);
-    console.error(err);
+    console.error(`Error occured while loading plugin '${name}':`, err);
 
     // Unregister the plugin and mark it as disposed.
     delete pluginRegistry[name];
@@ -1019,8 +1018,7 @@ function loadExtension(record: IExtensionRecord): Promise<void> {
   }).catch(err => {
 
     // If an error occurs while loading, log it to the console.
-    console.error(`Error occured while loading extension '${spec.id}'.`);
-    console.error(err);
+    console.error(`Error occured while loading extension '${spec.id}':`, err);
 
     // Clear the loader promise.
     record.promise = null;
@@ -1319,8 +1317,7 @@ function loadPoint(record: IPointRecord): Promise<void> {
   }).catch(err => {
 
     // If an error occurs while loading, log it to the console.
-    console.error(`Error occured while loading extension point '${spec.id}'.`);
-    console.error(err);
+    console.error(`Error occured while loading point '${spec.id}':`, err);
 
     // Clear the loader promise.
     record.promise = null;

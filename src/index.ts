@@ -949,6 +949,7 @@ function registerExtensionSpec(spec: IExtensionSpec): void {
  * after resolving the returned promise.
  */
 function loadExtension(record: IExtensionRecord): Promise<void> {
+  console.log("Loading extension... " + record.spec.id);
   // If the record is disposed or loaded, there is nothing to do.
   if (record.state === RecordState.Disposed ||
       record.state === RecordState.Loaded) {
@@ -1103,6 +1104,7 @@ class ExtensionPoint implements IExtensionPoint {
    * @param receiver - The receiver for the extension point, or `null`.
    */
   constructor(id: string, plugin: string, receiver: IReceiver) {
+    console.log("CREATING EXT POINT: " + id);
     this._id = id;
     this._plugin = plugin;
     this._receiver = receiver || null;
